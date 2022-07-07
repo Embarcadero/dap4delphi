@@ -5,7 +5,9 @@ interface
 uses
   System.SysUtils,
   Rest.Json.Types,
-  BaseProtocol.Types;
+  Rest.JsonReflect,
+  BaseProtocol.Types,
+  BaseProtocol.Json;
 
 type
   TProtocolMessage = class
@@ -14,7 +16,7 @@ type
   private
     [JSONName('seq')]
     FSeq: integer;
-    [JSONName('type')]
+    [JSONName('type'), JsonReflect(ctString, rtString, TEnumInterceptor)]
     FMessageType: TMessagetype;
   protected
     function GetMessageTypeFromAttribute(): TMessageType;
@@ -28,7 +30,7 @@ type
   [MessageType(TMessageType.Request)]
   TRequest<TArguments> = class(TProtocolMessage)
   private
-    [JSONName('command')]
+    [JSONName('command'), JsonReflect(ctString, rtString, TEnumInterceptor)]
     FCommand: TRequestCommand;
     [JSONName('arguments')]
     FArguments: TArguments;
@@ -45,7 +47,7 @@ type
   [MessageType(TMessageType.Event)]
   TEvent<TBody> = class(TProtocolMessage)
   private
-    [JSONName('event')]
+    [JSONName('event'), JsonReflect(ctString, rtString, TEnumInterceptor)]
     FEvent: TEventType;
     [JSONName('body')]
     FBody: TBody;
@@ -64,7 +66,7 @@ type
     FRequestSeq: integer;
     [JSONName('success')]
     FSuccess: boolean;
-    [JSONName('command')]
+    [JSONName('command'), JsonReflect(ctString, rtString, TEnumInterceptor)]
     FCommand: TRequestCommand;
     [JSONName('message')]
     FMessage: string;

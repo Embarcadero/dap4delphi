@@ -5,11 +5,13 @@ interface
 uses
   System.Rtti,
   Rest.Json.Types,
+  Rest.JsonReflect,
   BaseProtocol,
-  BaseProtocol.Types;
+  BaseProtocol.Types,
+  BaseProtocol.Json;
 
 type
-  TCancelArguments = class(TManaged)
+  TCancelArguments = class(TBaseType)
   private
     [JSONName('requestId')]
     FRequestId: integer;
@@ -25,7 +27,7 @@ type
 
   TCancelResponse = class(TResponse<TObject>);
   
-  TInitializeRequestArguments = class(TManaged)
+  TInitializeRequestArguments = class(TBaseType)
   private
     [JSONName('clientId')]
     FClientId: string;
@@ -39,7 +41,7 @@ type
     FLinesStartAt1: boolean;
     [JSONName('columnsStartAt1')]
     FColumnsStartAt1: boolean;
-    [JSONName('pathFormat')]
+    [JSONName('pathFormat'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FPathFormat: TPathFormat;
     [JSONName('supportsVariableType')]
     FSupportsVariableType: boolean;
@@ -83,7 +85,7 @@ type
   TConfigurationDoneResponse = class(TResponse<TEmptyBody>);
 
   { TODO : Create a converter/reverter }
-  TLaunchOrAttachRequestArguments = class(TManaged);
+  TLaunchOrAttachRequestArguments = class(TBaseType);
 
   TRestart = TValue;
 
@@ -117,7 +119,7 @@ type
   TAttachResponse = class(TResponse<TEmptyBody>);
 
   { TODO : Attention here }
-  TRestartArguments = class(TManaged)
+  TRestartArguments = class(TBaseType)
   private
     [JSONName('arguments')]
     FArguments: TLaunchOrAttachRequestArguments;
@@ -132,7 +134,7 @@ type
 
   TRestartResponse = class(TResponse<TEmptyBody>);
 
-  TDisconnectArguments = class(TManaged)
+  TDisconnectArguments = class(TBaseType)
   private
     [JSONName('restart')]
     FRestart: boolean;
@@ -151,7 +153,7 @@ type
 
   TDisconnectResponse = class(TResponse<TEmptyBody>);
 
-  TTerminateArguments = class(TManaged)
+  TTerminateArguments = class(TBaseType)
   private
     [JSONName('restart')]
     FRestart: boolean;
@@ -164,7 +166,7 @@ type
 
   TTerminateResponse = class(TResponse<TEmptyBody>);
 
-  TBreakpointLocationsArguments = class(TManaged)
+  TBreakpointLocationsArguments = class(TBaseType)
   private
     [JSONName('source'), Managed()]
     FSource: TSource<TValue>;
@@ -187,7 +189,7 @@ type
   [RequestCommand(TRequestCommand.BreakpointLocations)]
   TBreakpointLocationsRequest = class(TRequest<TBreakpointLocationsArguments>);
 
-  TBreakpointLocationsResponseBody = class(TManaged)
+  TBreakpointLocationsResponseBody = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TBreakpointLocations;
@@ -197,7 +199,7 @@ type
 
   TBreakpointLocationsResponse = class(TResponse<TBreakpointLocationsResponseBody>);
 
-  TSetBreakpointsArguments = class(TManaged)
+  TSetBreakpointsArguments = class(TBaseType)
   private
     [JSONName('source'), Managed()]
     FSource: TSource<TValue>;
@@ -217,7 +219,7 @@ type
   [RequestCommand(TRequestCommand.SetBreakpoints)]
   TSetBreakpointsRequest = class(TRequest<TSetBreakpointsArguments>);
 
-  TSetBreakpointsResponseBody = class(TManaged)
+  TSetBreakpointsResponseBody = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TBreakpoints;
@@ -227,7 +229,7 @@ type
 
   TSetBreakpointsResponse = class(TResponse<TSetBreakpointsResponseBody>);
 
-  TSetFunctionBreakpointsArguments = class(TManaged)
+  TSetFunctionBreakpointsArguments = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TFunctionBreakpoints;
@@ -238,7 +240,7 @@ type
   [RequestCommand(TRequestCommand.SetFunctionBreakpoints)]
   TSetFunctionBreakpointsRequest = class(TRequest<TSetFunctionBreakpointsArguments>);
 
-  TSetFunctionBreakpointsResponseBody = class(TManaged)
+  TSetFunctionBreakpointsResponseBody = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TBreakpoints;
@@ -248,7 +250,7 @@ type
 
   TSetFunctionBreakpointsResponse = class(TResponse<TSetFunctionBreakpointsResponseBody>);
 
-  TSetExceptionBreakpointsArguments = class(TManaged)
+  TSetExceptionBreakpointsArguments = class(TBaseType)
   private
     [JSONName('filters')]
     FFilters: TArray<string>;
@@ -265,7 +267,7 @@ type
   [RequestCommand(TRequestCommand.SetExceptionBreakpoints)]
   TSetExceptionBreakpointsRequest = class(TRequest<TSetExceptionBreakpointsArguments>);
 
-  TSetExceptionBreakpointsResponseBody = class(TManaged)
+  TSetExceptionBreakpointsResponseBody = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TBreakpoints;
@@ -275,7 +277,7 @@ type
 
   TSetExceptionBreakpointsResponse = class(TResponse<TSetExceptionBreakpointsResponseBody>);
 
-  TDatabreakpointInfoArguments = class(TManaged)
+  TDatabreakpointInfoArguments = class(TBaseType)
   private
     [JSONName('variablesReference')]
     FVariablesReference: integer;
@@ -289,13 +291,13 @@ type
   [RequestCommand(TRequestCommand.DataBreakpointInfo)]
   TDatabreakpointInfoRequest = class(TRequest<TDatabreakpointInfoArguments>);
 
-  TDatabreakpointInfoResponseBody = class(TManaged)
+  TDatabreakpointInfoResponseBody = class(TBaseType)
   private
     [JSONName('dataId')]
     FDataId: string;
     [JSONName('description')]
     FDescription: string;
-    [JSONName('accessTypes')]
+    [JSONName('accessTypes'), JSONReflect(ctStrings, rtStrings, TSetInterceptor)]
     FAccessTypes: TDataBreakpointAccessTypes;
     [JSONName('canPersist')]
     FCanPersist: boolean;
@@ -308,7 +310,7 @@ type
 
   TDatabreakpointInfoResponse = class(TResponse<TDatabreakpointInfoResponseBody>);
 
-  TSetDataBreakpointArguments = class(TManaged)
+  TSetDataBreakpointArguments = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TDataBreakpoints;
@@ -319,7 +321,7 @@ type
   [RequestCommand(TRequestCommand.SetDataBreakpoints)]
   TSetDataBreakpointRequest = class(TRequest<TSetDataBreakpointArguments>);
 
-  TSetDataBreakpointResponseBody = class(TManaged)
+  TSetDataBreakpointResponseBody = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TBreakpoints;
@@ -329,7 +331,7 @@ type
 
   TSetDataBreakpointResponse = class(TResponse<TSetDataBreakpointResponseBody>);
 
-  TSetInstructionBreakpointArguments = class(TManaged)
+  TSetInstructionBreakpointArguments = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TInstructionBreakpoints;
@@ -340,7 +342,7 @@ type
   [RequestCommand(TRequestCommand.SetInstructionBreakpoints)]
   TSetInstructionBreakpointRequest = class(TRequest<TSetInstructionBreakpointArguments>);
 
-  TSetInstructionBreakpointResponseBody = class(TManaged)
+  TSetInstructionBreakpointResponseBody = class(TBaseType)
   private
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TBreakpoints;
@@ -350,7 +352,7 @@ type
 
   TSetInstructionBreakpointResponse = class(TResponse<TSetInstructionBreakpointResponseBody>);
 
-  TContinueArguments = class(TManaged)
+  TContinueArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
@@ -364,7 +366,7 @@ type
   [RequestCommand(TRequestCommand.Continue)]
   TContinueRequest = class(TRequest<TContinueArguments>);
 
-  TContinueResponseBody = class(TManaged)
+  TContinueResponseBody = class(TBaseType)
   private
     [JSONName('allThreadsContinued')]
     FAllThreadsContinued: boolean;
@@ -374,13 +376,13 @@ type
 
   TContinueResponse = class(TResponse<TContinueResponseBody>);
 
-  TNextArguments = class(TManaged)
+  TNextArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
     [JSONName('singleThread')]
     FSingleThread: boolean;
-    [JSONName('granularity')]
+    [JSONName('granularity'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FGranularity: TSteppingGranularity;
   public
     property ThreadId: integer read FThreadId write FThreadId;
@@ -393,7 +395,7 @@ type
 
   TNextResponse = class(TResponse<TEmptyBody>);
 
-  TStepInArguments = class(TManaged)
+  TStepInArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
@@ -401,7 +403,7 @@ type
     FSingleThread: boolean;
     [JSONName('targetId')]
     FTargetId: integer;
-    [JSONName('granularity')]
+    [JSONName('granularity'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FGranularity: TSteppingGranularity;
   public
     property ThreadId: integer read FThreadId write FThreadId;
@@ -415,13 +417,13 @@ type
 
   TStepInResponse = class(TResponse<TEmptyBody>);
 
-  TStepOutArguments = class(TManaged)
+  TStepOutArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
     [JSONName('singleThread')]
     FSingleThread: boolean;
-    [JSONName('granularity')]
+    [JSONName('granularity'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FGranularity: TSteppingGranularity;
   public
     property ThreadId: integer read FThreadId write FThreadId;
@@ -434,13 +436,13 @@ type
 
   TStepOutResponse = class(TResponse<TEmptyBody>);
 
-  TStepBackArguments = class(TManaged)
+  TStepBackArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
     [JSONName('singleThread')]
     FSingleThread: boolean;
-    [JSONName('granularity')]
+    [JSONName('granularity'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FGranularity: TSteppingGranularity;
   public
     property ThreadId: integer read FThreadId write FThreadId;
@@ -453,7 +455,7 @@ type
 
   TStepBackResponse = class(TResponse<TEmptyBody>);
 
-  TReverseContinueArguments = class(TManaged)
+  TReverseContinueArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
@@ -469,7 +471,7 @@ type
 
   TReverseContinueResponse = class(TResponse<TEmptyBody>);
 
-  TRestartFrameArguments = class(TManaged)
+  TRestartFrameArguments = class(TBaseType)
   private
     [JSONName('frameId')]
     FFrameId: integer;
@@ -482,7 +484,7 @@ type
 
   TRestartFrameResponse = class(TResponse<TEmptyBody>);
 
-  TGotoArguments = class(TManaged)
+  TGotoArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
@@ -498,7 +500,7 @@ type
 
   TGotoResponse = class(TResponse<TEmptyBody>);
 
-  TPauseRequestArguments = class(TManaged)
+  TPauseRequestArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
@@ -511,7 +513,7 @@ type
 
   TPauseRequestResponse = class(TResponse<TEmptyBody>);
 
-  TStackTraceArguments = class(TManaged)
+  TStackTraceArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
@@ -531,7 +533,7 @@ type
   [RequestCommand(TRequestCommand.StackTrace)]
   TStackTraceRequest = class(TRequest<TStackTraceArguments>);
 
-  TStackTraceResponseBody = class(TManaged)
+  TStackTraceResponseBody = class(TBaseType)
   private
     [JSONName('stackFrames'), Managed()]
     FStackFrames: TStackFrames;
@@ -544,7 +546,7 @@ type
 
   TStackTraceResponse = class(TResponse<TStackTraceResponseBody>);
 
-  TScopeArguments = class(TManaged)
+  TScopeArguments = class(TBaseType)
   private
     [JSONName('frameId')]
     FFrameId: integer;
@@ -555,7 +557,7 @@ type
   [RequestCommand(TRequestCommand.Scopes)]
   TScopeRequest = class(TRequest<TScopeArguments>);
 
-  TScopeResponseBody = class(TManaged)
+  TScopeResponseBody = class(TBaseType)
   private
     [JSONName('scopes'), Managed()]
     FScopes: TScopes;
@@ -565,11 +567,11 @@ type
 
   TScopeResponse = class(TResponse<TScopeResponseBody>);
 
-  TVariablesArguments = class(TManaged)
+  TVariablesArguments = class(TBaseType)
   private
     [JSONName('variablesReference')]
     FVariablesReference: integer;
-    [JSONName('filter')]
+    [JSONName('filter'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FFilter: TVariablesFilter;
     [JSONName('start')]
     FStart: integer;
@@ -588,7 +590,7 @@ type
   [RequestCommand(TRequestCommand.Variables)]
   TVariablesRequest = class(TRequest<TVariablesArguments>);
 
-  TVariablesResponseBody = class(TManaged)
+  TVariablesResponseBody = class(TBaseType)
   private
     [JSONName('variables'), Managed()]
     FVariables: TVariables;
@@ -598,7 +600,7 @@ type
 
   TVariablesResponse = class(TResponse<TVariablesResponseBody>);
 
-  TSetVariableArguments = class(TManaged)
+  TSetVariableArguments = class(TBaseType)
   private
     [JSONName('variablesReference')]
     FVariablesReference: integer;
@@ -618,7 +620,7 @@ type
   [RequestCommand(TRequestCommand.SetVariable)]
   TSetVariableRequest = class(TRequest<TSetVariableArguments>);
 
-  TSetVariableResponseBody = class(TManaged)
+  TSetVariableResponseBody = class(TBaseType)
   private
     [JSONName('value')]
     FValue: string;
@@ -640,7 +642,7 @@ type
 
   TSetVariableResponse = class(TResponse<TSetVariableResponseBody>);
 
-  TSourceArguments = class(TManaged)
+  TSourceArguments = class(TBaseType)
   private
     [JSONName('source'), Managed()]
     FSource: TSource<TValue>;
@@ -654,7 +656,7 @@ type
   [RequestCommand(TRequestCommand.Source)]
   TSourceRequest = class(TRequest<TSourceArguments>);
 
-  TSourceResponseBody = class(TManaged)
+  TSourceResponseBody = class(TBaseType)
   private
     [JSONName('content')]
     FContent: string;
@@ -670,7 +672,7 @@ type
   [RequestCommand(TRequestCommand.Threads)]
   TThreadsRequest = class(TRequest<TEmptyArguments>);
 
-  TThreadsResponseBody = class(TManaged)
+  TThreadsResponseBody = class(TBaseType)
   private
     [JSONName('threads'), Managed()]
     FThreads: TThreads;
@@ -680,7 +682,7 @@ type
 
   TThreadsResponse = class(TResponse<TThreadsResponseBody>);
 
-  TTerminateThreadsArguments = class(TManaged)
+  TTerminateThreadsArguments = class(TBaseType)
   private
     [JSONName('threadIds')]
     FThreadIds: TArray<integer>;
@@ -693,7 +695,7 @@ type
 
   TTerminateThreadsResponse = class(TResponse<TEmptyBody>);
 
-  TModulesArguments = class(TManaged)
+  TModulesArguments = class(TBaseType)
   private
     [JSONName('startModule')]
     FStartModule: integer;
@@ -707,7 +709,7 @@ type
   [RequestCommand(TRequestCommand.Modules)]
   TModulesRequest = class(TRequest<TModulesArguments>);
 
-  TModulesResponseBody = class(TManaged)
+  TModulesResponseBody = class(TBaseType)
   private
     [JSONName('modules'), Managed()]
     FModules: TModules;
@@ -723,7 +725,7 @@ type
   [RequestCommand(TRequestCommand.LoadedSources)]
   TLoadedSourcesRequest = class(TRequest<TEmptyArguments>);
 
-  TLoadedSourcesResponseBody = class(TManaged)
+  TLoadedSourcesResponseBody = class(TBaseType)
   private
     [JSONName('sources'), Managed()]
     FSources: TSources;
@@ -733,13 +735,13 @@ type
 
   TLoadedSourcesResponse = class(TResponse<TLoadedSourcesResponseBody>);
 
-  TEvaluteArguments = class(TManaged)
+  TEvaluteArguments = class(TBaseType)
   private
     [JSONName('expression')]
     FExpression: string;
     [JSONName('frameId')]
     FFrameId: string;
-    [JSONName('context')]
+    [JSONName('context'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FContext: TEvaluteContext;
     [JSONName('format'), Managed()]
     FFormat: TValueFormat;
@@ -753,7 +755,7 @@ type
   [RequestCommand(TRequestCommand.Evaluate)]
   TEvaluteRequest = class(TRequest<TEvaluteArguments>);
 
-  TEvaluteResponseBody = class(TManaged)
+  TEvaluteResponseBody = class(TBaseType)
   private
     [JSONName('result')]
     FResult: string;
@@ -781,7 +783,7 @@ type
 
   TEvaluteResponse = class(TResponse<TEvaluteResponseBody>);
 
-  TSetExpressionArguments = class(TManaged)
+  TSetExpressionArguments = class(TBaseType)
   private
     [JSONName('expression')]
     FExpression: string;
@@ -801,7 +803,7 @@ type
   [RequestCommand(TRequestCommand.SetExpression)]
   TSetExpressionRequest = class(TRequest<TSetExpressionArguments>);
 
-  TSetExpressionResponseBody = class(TManaged)
+  TSetExpressionResponseBody = class(TBaseType)
   private
     [JSONName('value')]
     FValue: string;
@@ -823,7 +825,7 @@ type
 
   TSetExpressionResponse = class(TResponse<TSetExpressionResponseBody>);
 
-  TStepInTargetsArguments = class(TManaged)
+  TStepInTargetsArguments = class(TBaseType)
   private
     [JSONName('frameId')]
     FFrameId: integer;
@@ -834,7 +836,7 @@ type
   [RequestCommand(TRequestCommand.StepInTargets)]
   TStepInTargetsRequest = class(TRequest<TStepInTargetsArguments>);
 
-  TStepInTargetsResponseBody = class(TManaged)
+  TStepInTargetsResponseBody = class(TBaseType)
   private
     [JSONName('targets'), Managed()]
     FTargets: TStepInTargets;
@@ -844,7 +846,7 @@ type
 
   TStepInTargetsResponse = class(TResponse<TStepInTargetsResponseBody>);
 
-  TGotoTargetsArguments = class(TManaged)
+  TGotoTargetsArguments = class(TBaseType)
   private
     [JSONName('source'), Managed()]
     FSource: TSource<TValue>;
@@ -861,7 +863,7 @@ type
   [RequestCommand(TRequestCommand.GotoTargets)]
   TGotoTargetsRequest = class(TRequest<TGotoTargetsArguments>);
 
-  TGotoTargetsResponseBody = class(TManaged)
+  TGotoTargetsResponseBody = class(TBaseType)
   private
     [JSONName('targets'), Managed()]
     FTargets: TTargets;
@@ -871,7 +873,7 @@ type
 
   TGotoTargetsResponse = class(TResponse<TGotoTargetsResponseBody>);
 
-  TCompletitionsArguments = class(TManaged)
+  TCompletitionsArguments = class(TBaseType)
   private
     [JSONName('frameId')]
     FFrameId: integer;
@@ -891,7 +893,7 @@ type
   [RequestCommand(TRequestCommand.Completions)]
   TCompletitionsRequest = class(TRequest<TCompletitionsArguments>);
 
-  TCompletitionsResponseBody = class(TManaged)
+  TCompletitionsResponseBody = class(TBaseType)
   private
     [JSONName('frameId'), Managed()]
     FTargets: TCompletitionItems;
@@ -901,7 +903,7 @@ type
 
   TCompletitionsResponse = class(TResponse<TCompletitionsResponseBody>);
   
-  TExcpetionInfoArguments = class(TManaged)
+  TExcpetionInfoArguments = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
@@ -912,13 +914,13 @@ type
   [RequestCommand(TRequestCommand.ExceptionInfo)]
   TExcpetionInfoRequest = class(TRequest<TExcpetionInfoArguments>);
 
-  TExcpetionInfoResponseBody = class(TManaged)
+  TExcpetionInfoResponseBody = class(TBaseType)
   private
     [JSONName('exceptionId')]
     FExceptionId: string;
     [JSONName('description')]
     FDescription: string;
-    [JSONName('breakMode')]
+    [JSONName('breakMode'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FBreakMode: TExceptionBreakMode;
     [JSONName('details'), Managed()]
     FDetails: TExceptionDetail;
@@ -931,7 +933,7 @@ type
 
   TExcpetionInfoResponse = class(TResponse<TExcpetionInfoResponseBody>);
 
-  TReadMemoryArguments = class(TManaged)
+  TReadMemoryArguments = class(TBaseType)
   private
     [JSONName('memoryReference')]
     FMemoryReference: string;
@@ -948,7 +950,7 @@ type
   [RequestCommand(TRequestCommand.ReadMemory)]
   TReadMemoryRequest = class(TRequest<TReadMemoryArguments>);
 
-  TReadMemoryResponseBody = class(TManaged)
+  TReadMemoryResponseBody = class(TBaseType)
   private
     [JSONName('address')]
     FAddress: string;
@@ -964,7 +966,7 @@ type
 
   TReadMemoryResponse = class(TResponse<TReadMemoryResponseBody>);
 
-  TWriteMemoryArguments = class(TManaged)
+  TWriteMemoryArguments = class(TBaseType)
   private
     [JSONName('memoryReference')]
     FMemoryReference: string;
@@ -984,7 +986,7 @@ type
   [RequestCommand(TRequestCommand.WriteMemory)]
   TWriteMemoryRequest = class(TRequest<TWriteMemoryArguments>);
 
-  TWriteMemoryResponseBody = class(TManaged)
+  TWriteMemoryResponseBody = class(TBaseType)
   private
     [JSONName('offset')]
     FOffset: integer;
@@ -997,7 +999,7 @@ type
 
   TWriteMemoryResponse = class(TResponse<TWriteMemoryResponseBody>);
 
-  TDisassembleArguments = class(TManaged)
+  TDisassembleArguments = class(TBaseType)
   private
     [JSONName('memoryReference')]
     FMemoryReference: string;
@@ -1020,7 +1022,7 @@ type
   [RequestCommand(TRequestCommand.Disassemble)]
   TDisassembleRequest = class(TRequest<TDisassembleArguments>);
 
-  TDisassembleResponseBody = class(TManaged)
+  TDisassembleResponseBody = class(TBaseType)
   private
     [JSONName('instructions'), Managed()]
     FInstructions: TDisassembleInstructions;

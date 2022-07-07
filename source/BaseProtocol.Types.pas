@@ -4,7 +4,9 @@ interface
 
 uses
   System.Generics.Collections, System.Rtti,
-  Rest.Json.Types;
+  Rest.Json.Types,
+  Rest.JsonReflect,
+  BaseProtocol.Json;
 
 type
   {$SCOPEDENUMS ON}
@@ -251,6 +253,8 @@ type
     CustomColor);
   {$SCOPEDENUMS OFF}
 
+  {----------|| Attributes ||----------}
+
   MessageTypeAttribute = class(TCustomAttribute)
   private
     FMessageType: TMessageType;
@@ -277,11 +281,15 @@ type
 
   ManagedAttribute = class(TCustomAttribute);
 
-  TManaged = class
+  {----------|| BaseType ||----------}
+
+  TBaseType = class
   public
     procedure AfterConstruction(); override;
     procedure BeforeDestruction(); override;
   end;
+
+  {----------|| Empty Data ||----------}
 
   TEmptyArguments = class
   end;
@@ -289,9 +297,11 @@ type
   TEmptyBody = class
   end;
 
+ {----------|| BaseProtocol Types ||----------}
+
   TKeyValue = TDictionary<string, string>;
 
-  TMessage = class(TManaged)
+  TMessage = class(TBaseType)
   private type
     TVariables = TKeyValue;
   private
@@ -319,9 +329,9 @@ type
     property UrlLabel: string read FUrlLabel;
   end;
 
-  TChecksum = class(TManaged)
+  TChecksum = class(TBaseType)
   private
-    [JSONName('algorithm')]
+    [JSONName('algorithm'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FAlgorithm: TChecksumAlgorithm;
     [JSONName('checksum')]
     FChecksum: string;
@@ -330,7 +340,7 @@ type
     property Checksum: string read FChecksum write FChecksum;
   end;
 
-  TSource<TAdapterData> = class(TManaged)
+  TSource<TAdapterData> = class(TBaseType)
   private type
     TSources = TObjectList<TSource<TValue>>;
     TCheckSums = TObjectList<TChecksum>;
@@ -341,7 +351,7 @@ type
     FPath: string;
     [JSONName('sourceReference')]
     FSourceReference: integer;
-    [JSONName('presentationHint')]
+    [JSONName('presentationHint'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FPresentationHint: TSourcePresentationHint;
     [JSONName('origin')]
     FOrigin: string;
@@ -367,7 +377,7 @@ type
 
   TSources = TObjectList<TSource<TValue>>;
 
-  TBreakpoint = class(TManaged)
+  TBreakpoint = class(TBaseType)
   private
     [JSONName('id')]
     FId: integer;
@@ -405,7 +415,7 @@ type
 
   TBreakpoints = TObjectList<TBreakpoint>;
 
-  TModule = class(TManaged)
+  TModule = class(TBaseType)
   private
     [JSONName('id')]
     FId: integer;
@@ -442,7 +452,7 @@ type
 
   TModules = TObjectList<TModule>;
 
-  TExceptionBreakpointsFilter = class(TManaged)
+  TExceptionBreakpointsFilter = class(TBaseType)
   private
     [JSONName('filter')]
     FFilter: string;
@@ -465,7 +475,7 @@ type
     property ConditionDescription: string read FConditionDescription write FConditionDescription;
   end;
 
-  TColumnDescriptor = class(TManaged)
+  TColumnDescriptor = class(TBaseType)
   private
     [JSONName('attributeName')]
     FAttributeName: string;
@@ -473,7 +483,7 @@ type
     FLabel: string;
     [JSONName('format')]
     FFormat: string;
-    [JSONName('type')]
+    [JSONName('type'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FType: TColumnDescriptorType;
     [JSONName('width')]
     FWidth: integer;
@@ -485,7 +495,7 @@ type
     property Width: integer read FWidth write FWidth;
   end;
 
-  TCapabilities = class(TManaged)
+  TCapabilities = class(TBaseType)
   private type
     TColumnDescriptors = TObjectList<TColumnDescriptor>;
   private
@@ -515,7 +525,7 @@ type
     FSupportsModuleRequests: boolean;
     [JSONName('additionalModuleColumns')]
     FAdditionalModuleColumns: TColumnDescriptors;
-    [JSONName('supportedChecksumAlgorithms')]
+    [JSONName('supportedChecksumAlgorithms'), JSONReflect(ctStrings, rtStrings, TSetInterceptor)]
     FSupportedChecksumAlgorithms: TChecksumAlgorithms;
     [JSONName('supportsRestartRequest')]
     FSupportsRestartRequest: boolean;
@@ -603,7 +613,7 @@ type
     property SupportsSingleThreadExecutionRequests: boolean read FSupportsSingleThreadExecutionRequests write FSupportsSingleThreadExecutionRequests;
   end;
 
-  TBreakpointLocation = class(TManaged)
+  TBreakpointLocation = class(TBaseType)
   private
     [JSONName('line')]
     FLine: integer;
@@ -622,7 +632,7 @@ type
 
   TBreakpointLocations = TObjectList<TBreakpointLocation>;
 
-  TSourceBreakpoint = class(TManaged)
+  TSourceBreakpoint = class(TBaseType)
   private
     [JSONName('line')]
     FLine: integer;
@@ -644,7 +654,7 @@ type
 
   TSourceBreakpoints = TObjectList<TSourceBreakpoint>;
 
-  TFunctionBreakpoint = class(TManaged)
+  TFunctionBreakpoint = class(TBaseType)
   private
     [JSONName('name')]
     FName: string;
@@ -660,7 +670,7 @@ type
 
   TFunctionBreakpoints = TObjectList<TFunctionBreakpoint>;
 
-  TExceptionFilterOption = class(TManaged)
+  TExceptionFilterOption = class(TBaseType)
   private
     [JSONName('filterId')]
     FFilterId: string;
@@ -673,7 +683,7 @@ type
 
   TExceptionFilterOptions = TObjectList<TExceptionFilterOption>;
 
-  TExceptionPathSegment = class(TManaged)
+  TExceptionPathSegment = class(TBaseType)
   private
     [JSONName('negate')]
     FNegate: boolean;
@@ -684,11 +694,11 @@ type
     property Names: TArray<string> read FNames write FNames;
   end;
 
-  TExceptionOption = class(TManaged)
+  TExceptionOption = class(TBaseType)
   private
     [JSONName('path'), Managed()]
     FPath: TExceptionPathSegment;
-    [JSONName('breakMode')]
+    [JSONName('breakMode'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FBreakMode: TExceptionBreakMode;
   public
     property Path: TExceptionPathSegment read FPath write FPath;
@@ -697,11 +707,11 @@ type
 
   TExceptionOptions = TObjectList<TExceptionOption>;
 
-  TDataBreakpoint = class(TManaged)
+  TDataBreakpoint = class(TBaseType)
   private
     [JSONName('dataId')]
     FDataId: string;
-    [JSONName('accessType')]
+    [JSONName('accessType'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FAccessType: TDataBreakpointAccessType;
     [JSONName('condition')]
     FCondition: string;
@@ -716,7 +726,7 @@ type
 
   TDataBreakpoints = TObjectList<TDataBreakpoint>;
 
-  TInstructionBreakpoint = class(TManaged)
+  TInstructionBreakpoint = class(TBaseType)
   private
     [JSONName('instructionReference')]
     FInstructionReference: string;
@@ -735,7 +745,7 @@ type
 
   TInstructionBreakpoints = TObjectList<TInstructionBreakpoint>;
 
-  TStackFrameFormat = class(TManaged)
+  TStackFrameFormat = class(TBaseType)
   private
     [JSONName('parameters')]
     FParameters: boolean;
@@ -762,7 +772,7 @@ type
   end;
 
   TIntegerOrString = TValue;
-  TStackFrame = class(TManaged)
+  TStackFrame = class(TBaseType)
   private
     [JSONName('id')]
     FId: integer;
@@ -784,7 +794,7 @@ type
     FInstructionPointerReference: String;
     [JSONName('moduleId')]
     FModuleId: TIntegerOrString;
-    [JSONName('presentationHint')]
+    [JSONName('presentationHint'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FPresentationHint: TStackFramePresentationHint;
   public
     property Id: integer read FId write FId;
@@ -802,11 +812,11 @@ type
 
   TStackFrames = TObjectList<TStackFrame>;
 
-  TScope = class(TManaged)
+  TScope = class(TBaseType)
   private
     [JSONName('name')]
     FName: string;
-    [JSONName('presentationHint')]
+    [JSONName('presentationHint'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FPresentationHint: TScopePresentationHint;
     [JSONName('variablesReference')]
     FVariablesReference: integer;
@@ -842,20 +852,20 @@ type
 
   TScopes = TObjectList<TScope>;
 
-  TValueFormat = class(TManaged)
+  TValueFormat = class(TBaseType)
   private
     FHex: boolean;
   public
     property Hex: boolean read FHex write FHex;
   end;
 
-  TVariablePresentationHint = class(TManaged)
+  TVariablePresentationHint = class(TBaseType)
   private
-    [JSONName('kind')]
+    [JSONName('kind'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FKind: TVariableKind;
-    [JSONName('attributes')]
+    [JSONName('attributes'), JSONReflect(ctStrings, rtStrings, TSetInterceptor)]
     FAttributes: TVariableAttributes;
-    [JSONName('visibility')]
+    [JSONName('visibility'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FVisibility: TVariableVisibility;
     [JSONName('lazy')]
     FLazy: boolean;
@@ -866,7 +876,7 @@ type
     property Lazy: boolean read FLazy write FLazy;
   end;
 
-  TVariable = class(TManaged)
+  TVariable = class(TBaseType)
   private
     [JSONName('name')]
     FName: string;
@@ -900,7 +910,7 @@ type
 
   TVariables = TObjectList<TVariable>;
 
-  TThread = class(TManaged)
+  TThread = class(TBaseType)
   private
     [JSONName('id')]
     FId: integer;
@@ -913,7 +923,7 @@ type
 
   TThreads = TObjectList<TThread>;
 
-  TStepInTarget = class(TManaged)
+  TStepInTarget = class(TBaseType)
   private
     [JSONName('id')]
     FId: integer;
@@ -938,7 +948,7 @@ type
 
   TStepInTargets = TObjectList<TStepInTarget>;
 
-  TTarget = class(TManaged)
+  TTarget = class(TBaseType)
   private
     [JSONName('id')]
     FId: integer;
@@ -966,7 +976,7 @@ type
 
   TTargets = TObjectList<TTarget>;
 
-  TCompletitionItem = class(TManaged)
+  TCompletitionItem = class(TBaseType)
   private
     [JSONName('label')]
     FLabel: string;
@@ -978,7 +988,7 @@ type
     FDetail: string;
     [JSONName('start')]
     FStart: integer;
-    [JSONName('type')]
+    [JSONName('type'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FType: TCompletitionItemType;
     [JSONName('length')]
     FLength: integer;
@@ -1003,7 +1013,7 @@ type
 
   TExceptionDetail = class;
   TExceptionDetails = TObjectList<TExceptionDetail>;
-  TExceptionDetail = class(TManaged)
+  TExceptionDetail = class(TBaseType)
   private
     [JSONName('message')]
     FMessage: string;
@@ -1026,7 +1036,7 @@ type
     property InnerException: TExceptionDetails read FInnerException write FInnerException;
   end;
 
-  TDisassembleInstruction = class(TManaged)
+  TDisassembleInstruction = class(TBaseType)
   private
     [JSONName('address')]
     FAddress: string;
@@ -1089,12 +1099,12 @@ end;
 
 { TManaged }
 
-procedure TManaged.AfterConstruction;
+procedure TBaseType.AfterConstruction;
 begin
   inherited;
 end;
 
-procedure TManaged.BeforeDestruction;
+procedure TBaseType.BeforeDestruction;
 begin
   inherited;
 end;

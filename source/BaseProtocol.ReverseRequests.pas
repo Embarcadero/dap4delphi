@@ -5,15 +5,17 @@ interface
 uses
   System.Rtti,
   Rest.Json.Types,
+  Rest.JsonReflect,
   BaseProtocol,
-  BaseProtocol.Types;
+  BaseProtocol.Types,
+  BaseProtocol.Json;
 
 type
-  TRunInTerminalRequestArguments = class(TManaged)
+  TRunInTerminalRequestArguments = class(TBaseType)
   private type
     TEnvs = TKeyValue;
   private
-    [JSONName('kind')]
+    [JSONName('kind'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FKind: TRunInTerminalRequestArgumentsKind;
     [JSONName('title')]
     FTitle: string;
@@ -34,7 +36,7 @@ type
   [RequestCommand(TRequestCommand.RunInTerminal)]
   TRunInTerminalRequest = class(TRequest<TRunInTerminalRequestArguments>);
 
-  TRunInTerminalResponseBody = class(TManaged)
+  TRunInTerminalResponseBody = class(TBaseType)
   private
     [JSONName('processId')]
     FProcessId: integer;

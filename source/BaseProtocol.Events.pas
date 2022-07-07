@@ -5,16 +5,18 @@ interface
 uses
   System.Rtti,
   Rest.Json.Types,
+  Rest.JsonReflect,
   BaseProtocol,
-  BaseProtocol.Types;
+  BaseProtocol.Types,
+  BaseProtocol.Json;
 
 type
   [EventType(TEventType.Initialized)]
   TInitializedEvent<T> = class(TEvent<T>);
 
-  TStoppedEventBody = class(TManaged)
+  TStoppedEventBody = class(TBaseType)
   private
-    [JSONName('reason')]
+    [JSONName('reason'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FReason: TStoppedEventReason;
     [JSONName('description')]
     FDescription: string;
@@ -41,7 +43,7 @@ type
   [EventType(TEventType.Stopped)]
   TStoppedEvent = class(TEvent<TStoppedEventBody>);
 
-  TContinuedEventBody = class(TManaged)
+  TContinuedEventBody = class(TBaseType)
   private
     [JSONName('threadId')]
     FThreadId: integer;
@@ -55,7 +57,7 @@ type
   [EventType(TEventType.Continued)]
   TContinuedEvent = class(TEvent<TContinuedEventBody>);
 
-  TExitedEventBody = class(TManaged)
+  TExitedEventBody = class(TBaseType)
   private
     [JSONName('exitCode')]
     FExitCode: integer;
@@ -66,7 +68,7 @@ type
   [EventType(TEventType.Exited)]
   TExitedEvent = class(TEvent<TExitedEventBody>);
 
-  TTerminatedEventBody<TRestart> = class(TManaged)
+  TTerminatedEventBody<TRestart> = class(TBaseType)
   private
     [JSONName('restart')]
     FRestart: TRestart;
@@ -77,9 +79,9 @@ type
   [EventType(TEventType.Terminated)]
   TTerminatedEvent = class(TEvent<TTerminatedEventBody<TValue>>);
 
-  TThreadEventBody = class(TManaged)
+  TThreadEventBody = class(TBaseType)
   private
-    [JSONName('reason')]
+    [JSONName('reason'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FReason: TThreadEventReason;
     [JSONName('threadId')]
     FThreadId: integer;
@@ -91,13 +93,13 @@ type
   [EventType(TEventType.Thread)]
   TThreadEvent = class(TEvent<TThreadEventBody>)end;
 
-  TOutputEventBody<TData> = class(TManaged)
+  TOutputEventBody<TData> = class(TBaseType)
   private
-    [JSONName('category')]
+    [JSONName('category'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FCategory: TOutputEventCategory;
     [JSONName('output')]
     FOutput: string;
-    [JSONName('group')]
+    [JSONName('group'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FGroup: TOutputEventGroup;
     [JSONName('variablesReference')]
     FVariablesReference: integer;
@@ -124,9 +126,9 @@ type
   [EventType(TEventType.Output)]
   TOutputEvent = class(TEvent<TOutputEventBody<TValue>>);
 
-  TBreakpointEventBody = class(TManaged)
+  TBreakpointEventBody = class(TBaseType)
   private
-    [JSONName('reason')]
+    [JSONName('reason'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FReason: TBreakpointEventReason;
     [JSONName('breakpoint')]
     FBreakpoint: TBreakpoint;
@@ -138,9 +140,9 @@ type
   [EventType(TEventType.Breakpoint)]
   TBreakpointEvent = class(TEvent<TBreakpointEventBody>);
 
-  TModuleEventBody = class(TManaged)
+  TModuleEventBody = class(TBaseType)
   private
-    [JSONName('reason')]
+    [JSONName('reason'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FReason: TModuleEventReason;
     [Managed()]
     [JSONName('module')]
@@ -153,9 +155,9 @@ type
   [EventType(TEventType.Module)]
   TModuleEvent = class(TEvent<TModuleEventBody>);
 
-  TLoadedSourceEventBody = class(TManaged)
+  TLoadedSourceEventBody = class(TBaseType)
   private
-    [JSONName('reason')]
+    [JSONName('reason'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FReason: TLoadedSourceEventReason;
     [Managed()]
     [JSONName('source')]
@@ -168,7 +170,7 @@ type
   [EventType(TEventType.LoadedSource)]
   TLoadedSourceEvent = class(TEvent<TLoadedSourceEventBody>);
 
-  TProcessEventBody = class(TManaged)
+  TProcessEventBody = class(TBaseType)
   private
     [JSONName('name')]
     FName: string;
@@ -176,7 +178,7 @@ type
     FSystemprocessId: integer;
     [JSONName('isLocalProcess')]
     FIsLocalProcess: boolean;
-    [JSONName('startedMethod')]
+    [JSONName('startedMethod'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FStartedMethod: TProcessStartedMethod;
     [JSONName('pointerSize')]
     FPointerSize: integer;
@@ -191,7 +193,7 @@ type
   [EventType(TEventType.Process)]
   TProcessEvent = class(TEvent<TProcessEventBody>);
 
-  TCapabilitiesEventBody = class(TManaged)
+  TCapabilitiesEventBody = class(TBaseType)
   private
     [JSONName('capabilities'), Managed()]
     FCapabilities: TCapabilities;
@@ -202,7 +204,7 @@ type
   [EventType(TEventType.Capabilities)]
   TCapabilitiesEvent = class(TEvent<TCapabilitiesEventBody>);
 
-  TProgressStartEventBody = class(TManaged)
+  TProgressStartEventBody = class(TBaseType)
   private
     [JSONName('progressId')]
     FProgressId: string;
@@ -228,7 +230,7 @@ type
   [EventType(TEventType.ProgressStart)]
   TProgressStartEvent = class(TEvent<TProgressStartEventBody>);
 
-  TProgressUpdateEventBody = class(TManaged)
+  TProgressUpdateEventBody = class(TBaseType)
   private
     [JSONName('progressId')]
     FProgressId: string;
@@ -245,7 +247,7 @@ type
   [EventType(TEventType.ProgressUpdate)]
   TProgressUpdateEvent = class(TEvent<TProgressUpdateEventBody>);
 
-  TProgressEndEventBody = class(TManaged)
+  TProgressEndEventBody = class(TBaseType)
   private
     [JSONName('progressId')]
     FProgressId: string;
@@ -259,9 +261,9 @@ type
   [EventType(TEventType.ProgressEnd)]
   TProgressEndEvent = class(TEvent<TProgressEndEventBody>);
 
-  TInvalidatedEventBody = class(TManaged)
+  TInvalidatedEventBody = class(TBaseType)
   private
-    [JSONName('areas')]
+    [JSONName('areas'), JSONReflect(ctStrings, rtStrings, TSetInterceptor)]
     FAreas: TInvalidatedAreas;
     [JSONName('threadId')]
     FThreadId: integer;
@@ -276,7 +278,7 @@ type
   [EventType(TEventType.Invalidated)]
   TInvalidatedEvent = class(TEvent<TInvalidatedEventBody>);
 
-  TMemoryEventBody = class(TManaged)
+  TMemoryEventBody = class(TBaseType)
   private
     [JSONName('memoryReference')]
     FMemoryReference: string;
