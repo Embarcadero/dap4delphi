@@ -34,6 +34,9 @@ implementation
 uses
   System.Rtti, System.TypInfo, System.SysUtils, System.Classes, System.Character;
 
+const
+  TDefaultNullEnumItemName = 'None';
+
 { TBaseProtocolJsonAdapter }
 
 class procedure TBaseProtocolJsonAdapter.RegisterConverters(
@@ -68,6 +71,10 @@ begin
       Data.ClassName, Field]);
 
   Result := GetEnumName(LValue.TypeInfo, TValueData(LValue).FAsSLong);
+
+  if (Result = TDefaultNullEnumItemName) then
+    Exit(String.Empty);
+
   if not Result.IsEmpty() then
     Result[Low(Result)] := Result[Low(Result)].ToLower();
 end;

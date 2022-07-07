@@ -124,9 +124,40 @@ type
     Removed);
 
   TProcessStartedMethod = (
+    None,
     Launch,
     Attach,
     AttatchForSuspendedLaunch);
+
+  TRunInTerminalRequestArgumentsKind = (
+    None,
+    Integrated,
+    &External);
+
+  TPathFormat = (
+    None,
+    Path,
+    Uri);
+
+  TVariablesFilter = (
+    None,
+    Indexed,
+    Named);
+
+  TEvaluteContext = (
+    None,
+    Variables,
+    Watch,
+    Repl,
+    Hover,
+    Clipboard);
+
+  TColumnDescriptorType = (
+    None,
+    &String,
+    Number,
+    &Boolean,
+    UnixTimestampUTC);
 
   TSourcePresentationHint = (
     None,
@@ -134,66 +165,20 @@ type
     Emphasize,
     Deemphasize);
 
-  TChecksumAlgorithm = (
-    MD5,
-    SHA1,
-    SHA256,
-    Timestamp);
-  TChecksumAlgorithms = set of TChecksumAlgorithm;
-
-  TColumnDescriptorType = (
-    &String,
-    Number,
-    &Boolean,
-    UnixTimestampUTC);
-
-  TInvalidatedArea = (
-    All,
-    Stacks,
-    Threads,
-    Variables);
-  TInvalidatedAreas = set of TInvalidatedArea;
-
-  TRunInTerminalRequestArgumentsKind = (
-    Integrated,
-    External);
-
-  TPathFormat = (
-    Path,
-    Uri);
-
-  TExceptionBreakMode = (
-    Never,
-    Always,
-    Unhandled,
-    UserUnhandled);
-
-  TDataBreakpointAccessType = (
-    Read,
-    Write,
-    ReadWrite);
-  TDataBreakpointAccessTypes = set of TDataBreakpointAccessType;
-
-  TSteppingGranularity = (
-    Statement,
-    Line,
-    Instruction);
-
   TStackFramePresentationHint = (
+    None,
     Normal,
     &Label,
     Subtle);
 
   TScopePresentationHint = (
+    None,
     Arguments,
     Locals,
     Registers);
 
-  TVariablesFilter = (
-    Indexed,
-    Named);
-
   TVariableKind = (
+    None,
     &Property,
     Method,
     &Class,
@@ -207,6 +192,7 @@ type
     DataBreakpoint);
 
   TVariableAttribute = (
+    None,
     &Static,
     Constant,
     ReadOnly,
@@ -218,20 +204,27 @@ type
   TVariableAttributes = set of TVariableAttribute;
 
   TVariableVisibility = (
+    None,
     &Public,
     &Private,
     &Protected,
     Internal,
     &Final);
 
-  TEvaluteContext = (
-    Variables,
-    Watch,
-    Repl,
-    Hover,
-    Clipboard);
+  TDataBreakpointAccessType = (
+    Read,
+    Write,
+    ReadWrite);
+  TDataBreakpointAccessTypes = set of TDataBreakpointAccessType;
+
+  TSteppingGranularity = (
+    None,
+    Statement,
+    Line,
+    Instruction);
 
   TCompletitionItemType = (
+    None,
     Method,
     &Function,
     &Constructor,
@@ -251,6 +244,26 @@ type
     &File,
     Reference,
     CustomColor);
+
+  TChecksumAlgorithm = (
+    MD5,
+    SHA1,
+    SHA256,
+    Timestamp);
+  TChecksumAlgorithms = set of TChecksumAlgorithm;
+
+  TExceptionBreakMode = (
+    Never,
+    Always,
+    Unhandled,
+    UserUnhandled);
+
+  TInvalidatedArea = (
+    All,
+    Stacks,
+    Threads,
+    Variables);
+  TInvalidatedAreas = set of TInvalidatedArea;
   {$SCOPEDENUMS OFF}
 
   {----------|| Attributes ||----------}
