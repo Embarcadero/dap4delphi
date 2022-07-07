@@ -36,6 +36,7 @@ contains
   BaseProtocol.Types in '..\source\BaseProtocol.Types.pas',
   BaseProtocol.Events in '..\source\BaseProtocol.Events.pas',
   BaseProtocol.ReverseRequests in '..\source\BaseProtocol.ReverseRequests.pas',
-  BaseProtocol.Requests in '..\source\BaseProtocol.Requests.pas';
+  BaseProtocol.Requests in '..\source\BaseProtocol.Requests.pas',
+  BaseProtocol.Json in '..\source\BaseProtocol.Json.pas';
 
 end.
