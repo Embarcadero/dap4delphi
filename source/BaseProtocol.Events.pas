@@ -105,7 +105,7 @@ type
     FVariablesReference: integer;
     [Managed()]
     [JSONName('source')]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -117,7 +117,7 @@ type
     property Output: string read FOutput write FOutput;
     property Group: TOutputEventGroup read FGroup write FGroup;
     property VariablesReference: integer read FVariablesReference write FVariablesReference;
-    property Source: TSource<TValue> read FSource;
+    property Source: TDefaultSource read FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property Data: TData read FData write FData;
@@ -161,10 +161,10 @@ type
     FReason: TLoadedSourceEventReason;
     [Managed()]
     [JSONName('source')]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
   public
     property Reason: TLoadedSourceEventReason read FReason write FReason;
-    property Source: TSource<TValue> read FSource;
+    property Source: TDefaultSource read FSource;
   end;
 
   [EventType(TEventType.LoadedSource)]

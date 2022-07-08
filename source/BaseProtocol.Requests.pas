@@ -169,7 +169,7 @@ type
   TBreakpointLocationsArguments = class(TBaseType)
   private
     [JSONName('source'), Managed()]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -179,7 +179,7 @@ type
     [JSONName('endColumn')]
     FEndColumn: integer;
   public
-    property Source: TSource<TValue> read FSource write FSource;
+    property Source: TDefaultSource read FSource write FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
@@ -202,7 +202,7 @@ type
   TSetBreakpointsArguments = class(TBaseType)
   private
     [JSONName('source'), Managed()]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
     [JSONName('breakpoints'), Managed()]
     FBreakpoints: TSourceBreakpoints;
     [JSONName('lines')]
@@ -210,7 +210,7 @@ type
     [JSONName('sourceModified')]
     FSourceModified: boolean;
   public
-    property Source: TSource<TValue> read FSource write FSource;
+    property Source: TDefaultSource read FSource write FSource;
     property Breakpoints: TSourceBreakpoints read FBreakpoints write FBreakpoints;
     property Lines: TArray<integer> read FLines write FLines;
     property SourceModified: boolean read FSourceModified write FSourceModified;
@@ -645,11 +645,11 @@ type
   TSourceArguments = class(TBaseType)
   private
     [JSONName('source'), Managed()]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
     [JSONName('sourceReference')]
     FSourceReference: integer;
   public
-    property Source: TSource<TValue> read FSource write FSource;
+    property Source: TDefaultSource read FSource write FSource;
     property SourceReference: integer read FSourceReference write FSourceReference;
   end;
 
@@ -849,13 +849,13 @@ type
   TGotoTargetsArguments = class(TBaseType)
   private
     [JSONName('source'), Managed()]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
     FColumn: integer;
   public
-    property Source: TSource<TValue> read FSource write FSource;
+    property Source: TDefaultSource read FSource write FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
   end;

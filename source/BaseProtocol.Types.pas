@@ -9,6 +9,7 @@ uses
   BaseProtocol.Json;
 
 type
+  {$REGION 'ENUNS'}
   {$SCOPEDENUMS ON}
   TMessageType = (
     Request,
@@ -265,6 +266,7 @@ type
     Variables);
   TInvalidatedAreas = set of TInvalidatedArea;
   {$SCOPEDENUMS OFF}
+  {$ENDREGION 'ENUNS'}
 
   {----------|| Attributes ||----------}
 
@@ -353,9 +355,11 @@ type
     property Checksum: string read FChecksum write FChecksum;
   end;
 
+  TSource<TAdapterData> = class;
+  TDefaultSource = TSource<TValue>;
+  TSources = TObjectList<TDefaultSource>;
   TSource<TAdapterData> = class(TBaseType)
   private type
-    TSources = TObjectList<TSource<TValue>>;
     TCheckSums = TObjectList<TChecksum>;
   private
     [JSONName('name')]
@@ -388,8 +392,6 @@ type
     property Checksums: TCheckSums read FChecksums;
   end;
 
-  TSources = TObjectList<TSource<TValue>>;
-
   TBreakpoint = class(TBaseType)
   private
     [JSONName('id')]
@@ -400,7 +402,7 @@ type
     FMessage: string;
     [Managed()]
     [JSONName('source')]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -417,7 +419,7 @@ type
     property Id: integer read FId write FId;
     property Verified: boolean read FVerified write FVerified;
     property Message: string read FMessage write FMessage;
-    property Source: TSource<TValue> read FSource write FSource;
+    property Source: TDefaultSource read FSource write FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
@@ -792,7 +794,7 @@ type
     [JSONName('name')]
     FName: string;
     [JSONName('source'), Managed()]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -812,7 +814,7 @@ type
   public
     property Id: integer read FId write FId;
     property Name: string read FName write FName;
-    property Source: TSource<TValue> read FSource write FSource;
+    property Source: TDefaultSource read FSource write FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
@@ -840,7 +842,7 @@ type
     [JSONName('expensive')]
     FExpensive: Boolean;
     [JSONName('source'), Managed()]
-    FSource: TSource<TValue>;
+    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -856,7 +858,7 @@ type
     property NamedVariables: integer read FNamedVariables write FNamedVariables;
     property IndexedVariables: integer read FIndexedVariables write FIndexedVariables;
     property Expensive: boolean read FExpensive write FExpensive;
-    property Source: TSource<TValue> read FSource write FSource;
+    property Source: TDefaultSource read FSource write FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
@@ -1023,7 +1025,6 @@ type
 
   TCompletitionItems = TObjectList<TCompletitionItem>;
 
-
   TExceptionDetail = class;
   TExceptionDetails = TObjectList<TExceptionDetail>;
   TExceptionDetail = class(TBaseType)
@@ -1059,8 +1060,8 @@ type
     FInstruction: string;
     [JSONName('symbol')]
     FSymbol: string;
-    [JSONName('localtion'), Managed()]
-    FLocation: TSource<TValue>;
+    [JSONName('location'), Managed()]
+    FLocation: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -1074,7 +1075,7 @@ type
     property InstructionBytes: string read FInstructionBytes write FInstructionBytes;
     property Instruction: string read FInstruction write FInstruction;
     property Symbol: string read FSymbol write FSymbol;
-    property Location: TSource<TValue> read FLocation write FLocation;
+    property Location: TDefaultSource read FLocation write FLocation;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
