@@ -10,9 +10,12 @@ uses
 
 type
   TBaseProtocolJsonAdapter = class
+  private
+    class procedure DoRegisterObjectListConverter<T: class>(const AMarshal: TJSONMarshal); static;
+    class procedure DoRegisterObjectListReverter<T: class>(const AUnmarshal: TJSONUnMarshal); static;
   public
-    class procedure RegisterConverters(const AJSONMarshal: TJSONMarshal); static;
-    class procedure RegisterReverters(const AJSONUnmarshal: TJSONUnMarshal); static;
+    class procedure RegisterConverters(const AMarshal: TJSONMarshal); static;
+    class procedure RegisterReverters(const AUnmarshal: TJSONUnMarshal); static;
   end;
 
   TEnumInterceptor = class(TJSONInterceptor)
@@ -32,23 +35,99 @@ type
 implementation
 
 uses
-  System.Rtti, System.TypInfo, System.SysUtils, System.Classes, System.Character;
+  System.Rtti, System.TypInfo, System.SysUtils, System.Classes, System.Character,
+  System.Generics.Collections, BaseProtocol.Types;
 
 const
   TDefaultNullEnumItemName = 'None';
 
 { TBaseProtocolJsonAdapter }
 
-class procedure TBaseProtocolJsonAdapter.RegisterConverters(
-  const AJSONMarshal: TJSONMarshal);
+class procedure TBaseProtocolJsonAdapter.DoRegisterObjectListConverter<T>(
+  const AMarshal: TJSONMarshal);
 begin
+  AMarshal.RegisterConverter(TObjectList<T>,
+    function(Data: TObject): TListOfObjects
+    begin
+      var LList := TObjectList<T>(Data);
+      SetLength(Result, LList.Count);
+      for var I := Low(Result) to High(Result) do
+        Result[I] := LList[I];
+    end);
+end;
 
+class procedure TBaseProtocolJsonAdapter.DoRegisterObjectListReverter<T>(
+  const AUnmarshal: TJSONUnMarshal);
+const
+  FIELD_ANY = '*';
+var
+  LReverterEvent: TReverterEvent;
+begin
+  LReverterEvent := TReverterEvent.Create(T, FIELD_ANY);
+  LReverterEvent.TypeObjectsReverter := function(Data: TListOfObjects): TObject
+    begin
+      var LList := TObjectList<T>.Create();
+      try
+        for var LItem in Data do
+          if Assigned(LItem) then
+            LList.Add(LItem);
+      except
+        on E: Exception do begin
+          LList.Free();
+          raise;
+        end;
+      end;
+      Result := LList;
+    end;
+  AUnmarshal.RegisterReverter(TObjectList<T>, FIELD_ANY, LReverterEvent);
+end;
+
+class procedure TBaseProtocolJsonAdapter.RegisterConverters(
+  const AMarshal: TJSONMarshal);
+begin
+  DoRegisterObjectListConverter<TDefaultSource>(AMarshal);
+  DoRegisterObjectListConverter<TBreakpoint>(AMarshal);
+  DoRegisterObjectListConverter<TModule>(AMarshal);
+  DoRegisterObjectListConverter<TBreakpointLocation>(AMarshal);
+  DoRegisterObjectListConverter<TSourceBreakpoint>(AMarshal);
+  DoRegisterObjectListConverter<TFunctionBreakpoint>(AMarshal);
+  DoRegisterObjectListConverter<TExceptionFilterOption>(AMarshal);
+  DoRegisterObjectListConverter<TExceptionOption>(AMarshal);
+  DoRegisterObjectListConverter<TDataBreakpoint>(AMarshal);
+  DoRegisterObjectListConverter<TInstructionBreakpoint>(AMarshal);
+  DoRegisterObjectListConverter<TStackFrame>(AMarshal);
+  DoRegisterObjectListConverter<TScope>(AMarshal);
+  DoRegisterObjectListConverter<TVariable>(AMarshal);
+  DoRegisterObjectListConverter<TThread>(AMarshal);
+  DoRegisterObjectListConverter<TStepInTarget>(AMarshal);
+  DoRegisterObjectListConverter<TTarget>(AMarshal);
+  DoRegisterObjectListConverter<TCompletitionItem>(AMarshal);
+  DoRegisterObjectListConverter<TExceptionDetail>(AMarshal);
+  DoRegisterObjectListConverter<TDisassembleInstruction>(AMarshal);
 end;
 
 class procedure TBaseProtocolJsonAdapter.RegisterReverters(
-  const AJSONUnmarshal: TJSONUnMarshal);
+  const AUnmarshal: TJSONUnMarshal);
 begin
-
+  DoRegisterObjectListReverter<TDefaultSource>(AUnmarshal);
+  DoRegisterObjectListReverter<TBreakpoint>(AUnmarshal);
+  DoRegisterObjectListReverter<TModule>(AUnmarshal);
+  DoRegisterObjectListReverter<TBreakpointLocation>(AUnmarshal);
+  DoRegisterObjectListReverter<TSourceBreakpoint>(AUnmarshal);
+  DoRegisterObjectListReverter<TFunctionBreakpoint>(AUnmarshal);
+  DoRegisterObjectListReverter<TExceptionFilterOption>(AUnmarshal);
+  DoRegisterObjectListReverter<TExceptionOption>(AUnmarshal);
+  DoRegisterObjectListReverter<TDataBreakpoint>(AUnmarshal);
+  DoRegisterObjectListReverter<TInstructionBreakpoint>(AUnmarshal);
+  DoRegisterObjectListReverter<TStackFrame>(AUnmarshal);
+  DoRegisterObjectListReverter<TScope>(AUnmarshal);
+  DoRegisterObjectListReverter<TVariable>(AUnmarshal);
+  DoRegisterObjectListReverter<TThread>(AUnmarshal);
+  DoRegisterObjectListReverter<TStepInTarget>(AUnmarshal);
+  DoRegisterObjectListReverter<TTarget>(AUnmarshal);
+  DoRegisterObjectListReverter<TCompletitionItem>(AUnmarshal);
+  DoRegisterObjectListReverter<TExceptionDetail>(AUnmarshal);
+  DoRegisterObjectListReverter<TDisassembleInstruction>(AUnmarshal);
 end;
 
 { TEnumInterceptor }
@@ -65,7 +144,6 @@ var
   LRttiCtx: TRttiContext;
 begin
   var LValue := LRttiCtx.GetType(Data.ClassInfo).GetField(Field).GetValue(Data);
-
   if (LValue.Kind <> tkEnumeration) then
     raise Exception.CreateFmt('%s %s is not a valid enum type.', [
       Data.ClassName, Field]);
@@ -82,9 +160,15 @@ end;
 procedure TEnumInterceptor.StringReverter(Data: TObject; Field, Arg: string);
 var
   LRttiCtx: TRttiContext;
+  LValue: integer;
 begin
   var LRttiField := LRttiCtx.GetType(Data.ClassInfo).GetField(Field);
-  var LValue := GetEnumValue(LRttiField.FieldType.Handle, Arg);
+
+  if Arg.Trim().IsEmpty() then
+    LValue := GetEnumValue(LRttiField.FieldType.Handle, TDefaultNullEnumItemName)
+  else
+    LValue := GetEnumValue(LRttiField.FieldType.Handle, Arg);
+
   if LValue = -1 then
     raise Exception.CreateFmt('%s is not a valid enum value for %s %s', [
       Arg, Data.ClassName, Field]);
