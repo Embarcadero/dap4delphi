@@ -3,7 +3,7 @@ unit BaseProtocol.Types;
 interface
 
 uses
-  System.Generics.Collections, System.Rtti,
+  System.Generics.Collections, System.Rtti, System.Classes,
   Rest.Json.Types,
   Rest.JsonReflect,
   BaseProtocol.Json;
@@ -302,7 +302,7 @@ type
 
   {----------|| BaseType ||----------}
 
-  TBaseType = class
+  TBaseType = class(TPersistent)
   public
     procedure AfterConstruction(); override;
     procedure BeforeDestruction(); override;
@@ -355,6 +355,8 @@ type
     [JSONName('checksum')]
     FChecksum: string;
   public
+    procedure Assign(Source: TPersistent); override;
+
     property Algorithm: TChecksumAlgorithm read FAlgorithm write FAlgorithm;
     property Checksum: string read FChecksum write FChecksum;
   end;
@@ -386,6 +388,8 @@ type
     [JSONName('checksums')]
     FChecksums: TCheckSums;
   public
+    procedure Assign(Source: TPersistent); override;
+
     property Name: string read FName write FName;
     property Path: string read FPath write FPath;
     property SourceReference: integer read FSourceReference write FSourceReference;
@@ -791,7 +795,9 @@ type
   end;
 
   TIntegerOrString = TValue;
-  TStackFrame = class(TBaseType)
+  TStackFrame<TModuleId> = class;
+  TDefaultStackFrame = TStackFrame<TIntegerOrString>;
+  TStackFrame<TModuleId> = class(TBaseType)
   private
     [JSONName('id')]
     FId: integer;
@@ -812,10 +818,12 @@ type
     [JSONName('instructionPointerReference')]
     FInstructionPointerReference: String;
     [JSONName('moduleId')]
-    FModuleId: TIntegerOrString;
+    FModuleId: TModuleId;
     [JSONName('presentationHint'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FPresentationHint: TStackFramePresentationHint;
   public
+    procedure Assign(Source: TPersistent); override;
+
     property Id: integer read FId write FId;
     property Name: string read FName write FName;
     property Source: TDefaultSource read FSource write FSource;
@@ -825,11 +833,11 @@ type
     property EndColumn: integer read FEndColumn write FEndColumn;
     property CanRestart: boolean read FCanRestart write FCanRestart;
     property InstructionPointerReference: String read FInstructionPointerReference write FInstructionPointerReference;
-    property ModuleId: TIntegerOrString read FModuleId write FModuleId;
+    property ModuleId: TModuleId read FModuleId write FModuleId;
     property PresentationHint: TStackFramePresentationHint read FPresentationHint write FPresentationHint;
   end;
 
-  TStackFrames = TObjectList<TStackFrame>;
+  TStackFrames = TObjectList<TDefaultStackFrame>;
 
   TScope = class(TBaseType)
   private
@@ -1091,7 +1099,7 @@ type
 implementation
 
 uses
-  System.TypInfo;
+  System.TypInfo, System.SysUtils;
 
 { TMessageTypeAttribute }
 
@@ -1115,7 +1123,7 @@ begin
   FEventType := AEventType;
 end;
 
-{ TManaged }
+{ TBaseType }
 
 procedure TBaseType.AfterConstruction;
 begin
@@ -1125,6 +1133,76 @@ end;
 procedure TBaseType.BeforeDestruction;
 begin
   inherited;
+end;
+
+{ TChecksum }
+
+procedure TChecksum.Assign(Source: TPersistent);
+begin
+  inherited;
+  Self.Algorithm := TChecksum(Source).Algorithm;
+  Self.Checksum := TChecksum(Source).Checksum;
+end;
+
+{ TSource<TAdapterData> }
+
+procedure TSource<TAdapterData>.Assign(Source: TPersistent);
+var
+  LNewItem: TPersistent;
+begin
+  inherited;
+  Self.Name := TDefaultSource(Source).Name;
+  Self.Path := TDefaultSource(Source).Path;
+  Self.SourceReference := TDefaultSource(Source).SourceReference;
+  Self.PresentationHint := TDefaultSource(Source).PresentationHint;
+  Self.Origin := TDefaultSource(Source).Origin;
+  { TODO : Fix here when we get the AdapterData type possibilities }
+  for var LItem in Self.Sources do begin
+    LNewItem := LItem.ClassType.InitInstance(LNewItem) as TPersistent;
+    LNewItem.Create();
+    LNewItem.Assign(LItem);
+    TDefaultSource(Self).Sources.Add(TDefaultSource(LNewItem));
+  end;
+
+  if (Source is TDefaultSource) then
+    TDefaultSource(Self).AdapterData := TDefaultSource(Source).AdapterData
+  else if Source is TSource<string> then
+    TDefaultSource(Self).AdapterData := TSource<string>(Source).AdapterData
+  else
+    raise Exception.Create('Invalid "AdapterData" type.');
+
+  for var LItem in Self.Checksums do begin
+    LNewItem := TChecksum.Create();
+    LNewItem.Assign(LItem);
+    Self.Checksums.Add(TChecksum(LNewItem));
+  end;
+end;
+
+{ TStackFrame<TModuleId> }
+
+procedure TStackFrame<TModuleId>.Assign(Source: TPersistent);
+begin
+  inherited;
+  Self.Id := TDefaultStackFrame(Source).Id;
+  Self.Name := TDefaultStackFrame(Source).Name;
+  Self.Line := TDefaultStackFrame(Source).Line;
+  Self.Column := TDefaultStackFrame(Source).Column;
+  Self.EndLine := TDefaultStackFrame(Source).EndLine;
+  Self.EndColumn := TDefaultStackFrame(Source).EndColumn;
+  Self.CanRestart := TDefaultStackFrame(Source).CanRestart;
+  Self.InstructionPointerReference := TDefaultStackFrame(Source).InstructionPointerReference;
+  Self.PresentationHint := TDefaultStackFrame(Source).PresentationHint;
+
+  Self.Source.Assign(TDefaultStackFrame(Source).Source);
+
+  if (Source is TDefaultStackFrame) then
+    TDefaultStackFrame(Self).ModuleId := TDefaultStackFrame(Source).ModuleId
+  else if Source is TStackFrame<Integer> then
+    TDefaultStackFrame(Self).ModuleId := TStackFrame<Integer>(Source).ModuleId
+  else if Source is TStackFrame<String> then
+    TDefaultStackFrame(Self).ModuleId := TStackFrame<String>(Source).ModuleId
+  else
+    raise Exception.Create('Invalid "ModuleId" type.');
 end;
 
 end.

@@ -96,7 +96,7 @@ begin
   DoRegisterObjectListConverter<TExceptionOption>(AMarshal);
   DoRegisterObjectListConverter<TDataBreakpoint>(AMarshal);
   DoRegisterObjectListConverter<TInstructionBreakpoint>(AMarshal);
-  DoRegisterObjectListConverter<TStackFrame>(AMarshal);
+  DoRegisterObjectListConverter<TDefaultStackFrame>(AMarshal);
   DoRegisterObjectListConverter<TScope>(AMarshal);
   DoRegisterObjectListConverter<TVariable>(AMarshal);
   DoRegisterObjectListConverter<TThread>(AMarshal);
@@ -123,6 +123,26 @@ begin
     begin
       raise ENotImplemented.Create('Not implemented.');
     end);
+
+  AMarshal.RegisterConverter(TDefaultStackFrame,
+    function(Data: TObject): TObject
+    begin
+      if TDefaultStackFrame(Data).ModuleId.IsType<Integer> then
+        Result := TStackFrame<Integer>.Create()
+      else
+        Result := TStackFrame<String>.Create();
+      TPersistent(Result).Assign(TPersistent(Data));
+    end);
+
+  AMarshal.RegisterConverter(TDefaultSource,
+    function(Data: TObject): TObject
+    begin
+      if TDefaultSource(Data).AdapterData.IsType<String> then
+        Result := TSource<String>.Create()
+      else
+        raise ENotImplemented.Create('Not implemented.');
+      TPersistent(Result).Assign(TPersistent(Data));
+    end);
 end;
 
 class procedure TBaseProtocolJsonAdapter.RegisterReverters(
@@ -138,7 +158,7 @@ begin
   DoRegisterObjectListReverter<TExceptionOption>(AUnmarshal);
   DoRegisterObjectListReverter<TDataBreakpoint>(AUnmarshal);
   DoRegisterObjectListReverter<TInstructionBreakpoint>(AUnmarshal);
-  DoRegisterObjectListReverter<TStackFrame>(AUnmarshal);
+  DoRegisterObjectListReverter<TDefaultStackFrame>(AUnmarshal);
   DoRegisterObjectListReverter<TScope>(AUnmarshal);
   DoRegisterObjectListReverter<TVariable>(AUnmarshal);
   DoRegisterObjectListReverter<TThread>(AUnmarshal);
@@ -164,6 +184,23 @@ begin
     function(Data: TListOfStrings): TObject
     begin
       raise ENotImplemented.Create('Not implemented.');
+    end);
+
+  AUnmarshal.RegisterReverter(TDefaultStackFrame, 'FModuleId',
+    procedure(Data: TObject; Field, Arg: string)
+    var
+      LInteger: integer;
+    begin
+      if Integer.TryParse(Arg, LInteger) then
+        TDefaultStackFrame(Data).ModuleId := LInteger
+      else
+        TDefaultStackFrame(Data).ModuleId := Arg;
+    end);
+
+  AUnmarshal.RegisterReverter(TDefaultSource, 'FAdapterData',
+    procedure(Data: TObject; Field, Arg: string)
+    begin
+      TDefaultSource(Data).AdapterData := Arg;
     end);
 end;
 
