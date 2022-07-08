@@ -18,9 +18,11 @@ type
     class procedure RegisterReverters(const AUnmarshal: TJSONUnMarshal); static;
   end;
 
+  {----------|| Interceptors ||----------}
+
   TEnumInterceptor = class(TJSONInterceptor)
   public
-    constructor Create;
+    constructor Create();
     function StringConverter(Data: TObject; Field: string): string; override;
     procedure StringReverter(Data: TObject; Field: string; Arg: string); override;
   end;
@@ -39,7 +41,8 @@ uses
   System.Generics.Collections, BaseProtocol.Types;
 
 const
-  TDefaultNullEnumItemName = 'None';
+  DEFAULT_NULL_ENUM_ITEM_NAME = 'None';
+  FIELD_ANY = '*';
 
 { TBaseProtocolJsonAdapter }
 
@@ -58,8 +61,6 @@ end;
 
 class procedure TBaseProtocolJsonAdapter.DoRegisterObjectListReverter<T>(
   const AUnmarshal: TJSONUnMarshal);
-const
-  FIELD_ANY = '*';
 var
   LReverterEvent: TReverterEvent;
 begin
@@ -104,6 +105,24 @@ begin
   DoRegisterObjectListConverter<TCompletitionItem>(AMarshal);
   DoRegisterObjectListConverter<TExceptionDetail>(AMarshal);
   DoRegisterObjectListConverter<TDisassembleInstruction>(AMarshal);
+
+  AMarshal.RegisterConverter(TEmptyBody,
+    function(Data: TObject): TObject
+    begin
+      Result := nil;
+    end);
+
+  AMarshal.RegisterConverter(TEmptyArguments,
+    function(Data: TObject): TObject
+    begin
+      Result := nil;
+    end);
+
+  AMarshal.RegisterConverter(TKeyValue,
+    function(Data: TObject): TListOfStrings
+    begin
+      raise ENotImplemented.Create('Not implemented.');
+    end);
 end;
 
 class procedure TBaseProtocolJsonAdapter.RegisterReverters(
@@ -128,13 +147,31 @@ begin
   DoRegisterObjectListReverter<TCompletitionItem>(AUnmarshal);
   DoRegisterObjectListReverter<TExceptionDetail>(AUnmarshal);
   DoRegisterObjectListReverter<TDisassembleInstruction>(AUnmarshal);
+
+  AUnmarshal.RegisterReverter(TEmptyBody,
+    function(Data: TObject): TObject
+    begin
+      Result := nil;
+    end);
+
+  AUnmarshal.RegisterReverter(TEmptyArguments,
+    function(Data: TObject): TObject
+    begin
+      Result := nil;
+    end);
+
+  AUnmarshal.RegisterReverter(TKeyValue,
+    function(Data: TListOfStrings): TObject
+    begin
+      raise ENotImplemented.Create('Not implemented.');
+    end);
 end;
 
 { TEnumInterceptor }
 
 constructor TEnumInterceptor.Create;
 begin
-  inherited;
+  inherited Create();
   ConverterType := ctString;
   ReverterType := rtString;
 end;
@@ -150,7 +187,7 @@ begin
 
   Result := GetEnumName(LValue.TypeInfo, TValueData(LValue).FAsSLong);
 
-  if (Result = TDefaultNullEnumItemName) then
+  if (Result = DEFAULT_NULL_ENUM_ITEM_NAME) then
     Exit(String.Empty);
 
   if not Result.IsEmpty() then
@@ -165,7 +202,7 @@ begin
   var LRttiField := LRttiCtx.GetType(Data.ClassInfo).GetField(Field);
 
   if Arg.Trim().IsEmpty() then
-    LValue := GetEnumValue(LRttiField.FieldType.Handle, TDefaultNullEnumItemName)
+    LValue := GetEnumValue(LRttiField.FieldType.Handle, DEFAULT_NULL_ENUM_ITEM_NAME)
   else
     LValue := GetEnumValue(LRttiField.FieldType.Handle, Arg);
 
