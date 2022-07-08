@@ -16,7 +16,7 @@ type
   private
     [JSONName('seq')]
     FSeq: integer;
-    [JSONName('type'), JsonReflect(ctString, rtString, TEnumInterceptor)]
+    [JSONName('type'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FMessageType: TMessagetype;
   protected
     function GetMessageTypeFromAttribute(): TMessageType;
@@ -30,7 +30,7 @@ type
   [MessageType(TMessageType.Request)]
   TRequest<TArguments> = class(TProtocolMessage)
   private
-    [JSONName('command'), JsonReflect(ctString, rtString, TEnumInterceptor)]
+    [JSONName('command'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FCommand: TRequestCommand;
     [JSONName('arguments')]
     FArguments: TArguments;
@@ -47,7 +47,7 @@ type
   [MessageType(TMessageType.Event)]
   TEvent<TBody> = class(TProtocolMessage)
   private
-    [JSONName('event'), JsonReflect(ctString, rtString, TEnumInterceptor)]
+    [JSONName('event'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FEvent: TEventType;
     [JSONName('body')]
     FBody: TBody;
@@ -66,10 +66,10 @@ type
     FRequestSeq: integer;
     [JSONName('success')]
     FSuccess: boolean;
-    [JSONName('command'), JsonReflect(ctString, rtString, TEnumInterceptor)]
+    [JSONName('command'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FCommand: TRequestCommand;
-    [JSONName('message')]
-    FMessage: string;
+    [JSONName('message'), JSONReflect(ctString, rtString, TEnumInterceptor)]
+    FMessage: TResponseMessage;
     [JSONName('body')]
     FBody: TBody;
   public
@@ -79,7 +79,7 @@ type
     property RequestSeq: integer read FRequestSeq write FRequestSeq;
     property Success: boolean read FSuccess write FSuccess;
     property Command: TRequestCommand read FCommand write FCommand;
-    property Message: string read FMessage write FMessage;
+    property Message: TResponseMessage read FMessage write FMessage;
     property Body: TBody read FBody;
   end;
 
