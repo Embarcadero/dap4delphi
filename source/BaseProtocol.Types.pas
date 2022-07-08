@@ -1158,6 +1158,7 @@ begin
   Self.Origin := TDefaultSource(Source).Origin;
   { TODO : Fix here when we get the AdapterData type possibilities }
   for var LItem in Self.Sources do begin
+    //Creates a identical instance type
     LNewItem := LItem.ClassType.InitInstance(LNewItem) as TPersistent;
     LNewItem.Create();
     LNewItem.Assign(LItem);
@@ -1195,14 +1196,31 @@ begin
 
   Self.Source.Assign(TDefaultStackFrame(Source).Source);
 
-  if (Source is TDefaultStackFrame) then
-    TDefaultStackFrame(Self).ModuleId := TDefaultStackFrame(Source).ModuleId
-  else if Source is TStackFrame<Integer> then
-    TDefaultStackFrame(Self).ModuleId := TStackFrame<Integer>(Source).ModuleId
-  else if Source is TStackFrame<String> then
-    TDefaultStackFrame(Self).ModuleId := TStackFrame<String>(Source).ModuleId
-  else
-    raise Exception.Create('Invalid "ModuleId" type.');
+  var GetModuleId := function(const AStackFrame: TPersistent): TValue
+  begin
+    if (AStackFrame is TDefaultStackFrame) then
+      Result := TDefaultStackFrame(AStackFrame).ModuleId
+    else if AStackFrame is TStackFrame<Integer> then
+      Result :=  TStackFrame<Integer>(AStackFrame).ModuleId
+    else if AStackFrame is TStackFrame<String> then
+      Result :=  TStackFrame<String>(AStackFrame).ModuleId
+    else
+      raise Exception.Create('Invalid "ModuleId" type.');
+  end;
+
+  var SetModuleId := procedure(const AStackFrame: TPersistent; const AValue: TValue)
+  begin
+    if AStackFrame is TDefaultStackFrame then
+      TDefaultStackFrame(AStackFrame).ModuleId := AValue
+    else if AStackFrame is  TStackFrame<Integer> then
+      TStackFrame<Integer>(AStackFrame).ModuleId := AValue.AsInteger()
+    else if AStackFrame is TStackFrame<String> then
+      TStackFrame<String>(AStackFrame).ModuleId := AValue.AsString()
+    else
+      raise Exception.Create('Invalid "ModuleId" type.');
+  end;
+
+  SetModuleId(Self, GetModuleId(Source));
 end;
 
 end.
