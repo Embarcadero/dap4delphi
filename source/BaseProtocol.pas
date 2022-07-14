@@ -11,6 +11,7 @@ uses
   BaseProtocol.Json;
 
 type
+  //Base protocol classes
   TProtocolMessage = class
   strict private
     class var FMessageSequence: integer;
@@ -22,8 +23,8 @@ type
     FSeq: integer;
     [JSONName('type'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FMessageType: TMessagetype;
-  protected
-    function GetMessageTypeFromAttribute(): TMessageType;
+  public
+    class function GetMessageTypeFromAttribute(): TMessageType;
   public
     class constructor Create();
     class destructor Destroy();
@@ -46,42 +47,59 @@ type
     class property Events: TDictionary<TEventType, TClass> read FEvents;
   end;
 
+  //Request classes
   [MessageType(TMessageType.Request)]
-  TRequest<TArguments> = class(TProtocolMessage)
+  TRequest = class(TProtocolMessage)
   private
     [JSONName('command'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FCommand: TRequestCommand;
+  public
+    class function GetRequestCommandFromAttribute(): TRequestCommand;
+  public
+    procedure AfterConstruction(); override;
+
+    property Command: TRequestCommand read FCommand;
+  end;
+
+  TRequest<TArguments> = class(TRequest)
+  private
     [JSONName('arguments')]
     FArguments: TArguments;
-  protected
-    function GetRequestCommandFromAttribute(): TRequestCommand;
   public
     procedure AfterConstruction(); override;
     procedure BeforeDestruction(); override;
 
-    property Command: TRequestCommand read FCommand;
     property Arguments: TArguments read FArguments write FArguments;
   end;
-  TDefaultRequest = TRequest<TEmptyArguments>;
 
+  //Event classes
   [MessageType(TMessageType.Event)]
-  TEvent<TBody> = class(TProtocolMessage)
+  TEvent = class(TProtocolMessage)
   private
     [JSONName('event'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FEvent: TEventType;
+  public
+    class function GetEventTypeFromAttribute(): TEventType;
+  public
+    procedure AfterConstruction(); override;
+
+    property Event: TEventType read FEvent;
+  end;
+
+  TEvent<TBody> = class(TEvent)
+  private
     [JSONName('body')]
     FBody: TBody;
   public
     procedure AfterConstruction(); override;
     procedure BeforeDestruction(); override;
 
-    property Event: TEventType read FEvent;
     property Body: TBody read FBody write FBody;
   end;
-  TDefaultEvent = TEvent<TEmptyBody>;
 
+  //Response classes
   [MessageType(TMessageType.Response)]
-  TResponse<TBody> = class(TProtocolMessage)
+  TResponse = class(TProtocolMessage)
   private
     [JSONName('request_seq')]
     FRequestSeq: integer;
@@ -91,19 +109,25 @@ type
     FCommand: TRequestCommand;
     [JSONName('message'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FMessage: TResponseMessage;
+  public
+    procedure AfterConstruction(); override;
+
+    property RequestSeq: integer read FRequestSeq write FRequestSeq;
+    property Success: boolean read FSuccess write FSuccess;
+    property Command: TRequestCommand read FCommand write FCommand;
+    property Message: TResponseMessage read FMessage write FMessage;
+  end;
+
+  TResponse<TBody> = class(TResponse)
+  private
     [JSONName('body')]
     FBody: TBody;
   public
     procedure AfterConstruction(); override;
     procedure BeforeDestruction(); override;
 
-    property RequestSeq: integer read FRequestSeq write FRequestSeq;
-    property Success: boolean read FSuccess write FSuccess;
-    property Command: TRequestCommand read FCommand write FCommand;
-    property Message: TResponseMessage read FMessage write FMessage;
     property Body: TBody read FBody;
   end;
-  TDefaultResponse = TResponse<TEmptyBody>;
 
   TErrorResponseBody = class
   private
@@ -155,7 +179,7 @@ begin
   FRequests.Free();
 end;
 
-function TProtocolMessage.GetMessageTypeFromAttribute: TMessageType;
+class function TProtocolMessage.GetMessageTypeFromAttribute: TMessageType;
 begin
   var LRttiCtx := TRttiContext.Create();
   try
@@ -200,12 +224,38 @@ begin
   FResponses.Remove(ARequestCommand);
 end;
 
+{ TRequest }
+
+procedure TRequest.AfterConstruction;
+begin
+  inherited;
+  FCommand := GetRequestCommandFromAttribute();
+end;
+
+class function TRequest.GetRequestCommandFromAttribute: TRequestCommand;
+begin
+  var LRttiCtx := TRttiContext.Create();
+  try
+    var LType := LRttiCtx.GetType(Self.ClassInfo);
+    while Assigned(LType) do begin
+      var LAttribute := LType.GetAttribute<RequestCommandAttribute>();
+      if Assigned(LAttribute) then
+        Exit(LAttribute.RequestCommand);
+
+      LType := LType.BaseType;
+    end;
+
+    raise Exception.Create('Request command attribute not found.');
+  finally
+    LRttiCtx.Free();
+  end;
+end;
+
 { TRequest<TArguments> }
 
 procedure TRequest<TArguments>.AfterConstruction;
 begin
   inherited;
-  FCommand := GetRequestCommandFromAttribute();
   FArguments := TGenericHelper.CreateGenericIfClass<TArguments>();
 end;
 
@@ -215,15 +265,22 @@ begin
   TGenericHelper.FreeGenericIfInstance<TArguments>(FArguments);
 end;
 
-function TRequest<TArguments>.GetRequestCommandFromAttribute: TRequestCommand;
+{ TEvent }
+
+procedure TEvent.AfterConstruction;
 begin
-  var LRttiCtx := TRttiContext.Create();
+  inherited;
+end;
+
+class function TEvent.GetEventTypeFromAttribute: TEventType;
+begin
+ var LRttiCtx := TRttiContext.Create();
   try
     var LType := LRttiCtx.GetType(Self.ClassInfo);
     while Assigned(LType) do begin
-      var LAttribute := LType.GetAttribute<RequestCommandAttribute>();
+      var LAttribute := LType.GetAttribute<EventTypeAttribute>();
       if Assigned(LAttribute) then
-        Exit(LAttribute.RequestCommand);
+        Exit(LAttribute.EventType);
 
       LType := LType.BaseType;
     end;
@@ -246,6 +303,13 @@ procedure TEvent<TBody>.BeforeDestruction;
 begin
   inherited;
   TGenericHelper.FreeGenericIfInstance<TBody>(FBody);
+end;
+
+{ TResponse }
+
+procedure TResponse.AfterConstruction;
+begin
+  inherited;
 end;
 
 { TResponse<TBody> }

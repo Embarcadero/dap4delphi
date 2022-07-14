@@ -55,7 +55,7 @@ end;
 
 function TBaseProtocolClientSocket.RequestData: TBytes;
 begin
-  Result := FSocket.ReceiveFrom();
+  Result := FSocket.Receive();
 end;
 
 procedure TBaseProtocolClientSocket.SendData(const ARaw: TBytes);

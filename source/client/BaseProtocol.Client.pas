@@ -18,8 +18,8 @@ type
   {$SCOPEDENUMS OFF}
   TResolve<T> = reference to procedure(const AArg: T);
   TReject = reference to procedure(const AArg: TResponseMessage);
-  TEventNotification<T: TProtocolMessage> = reference to procedure(const AEvent: T);
-  TEventNotification = TEventNotification<TProtocolMessage>;
+  TEventNotification<T: TEvent> = reference to procedure(const AEvent: T);
+  TEventNotification = TEventNotification<TEvent>;
 
   IUnsubscribable = interface
     ['{6E085AE3-0AE4-4CAF-9921-12902D1633B6}']
@@ -30,19 +30,19 @@ type
   private
     FActive: boolean;
     FState: TConnectionState;
-    FPendingRequests: TDictionary<integer, TProc<TProtocolMessage>>;
+    FPendingRequests: TDictionary<integer, TProc<TResponse>>;
     FEventSubscribers: TList<TEventNotification>;
     FTask: ITask;
     FBuffer: string;
     FContentLenght: integer;
-    procedure DoHandleResponse(const AResponse: TProtocolMessage);
-    procedure DoHandleEvent(const AEvent: TProtocolMessage);
+    procedure DoHandleResponse(const AResponse: TResponse);
+    procedure DoHandleEvent(const AEvent: TEvent);
     procedure DoHandleRequest(const ARequest: TProtocolMessage);
     procedure SetActive(const Value: boolean);
   protected
     procedure InternalConnect(); virtual; abstract;
     procedure InternalDisconnect(); virtual; abstract;
-
+    //Message type comparison
     function IsResponse(const AMessage: TProtocolMessage): boolean;
     function IsEvent(const AMessage: TProtocolMessage): boolean;
     function IsRequest(const AMessage: TProtocolMessage): boolean;
@@ -63,10 +63,10 @@ type
       const AEventNotification: TEventNotification): IUnsubscribable; overload;
     function SubscribeToEvent<T>(const AEventType: TEventType;
       const AEventNotification: TEventNotification): IUnsubscribable; overload;
-    function SubscribeToEvent<T: TProtocolMessage>(
+    function SubscribeToEvent<T: TEvent>(
       const AEventNotification: TEventNotification<T>): IUnsubscribable; overload;
 
-    procedure SendRequest<T: TProtocolMessage>(const AMessage: TProtocolMessage;
+    procedure SendRequest<T: TResponse>(const AMessage: TRequest;
       const AResolve: TResolve<T>; const AReject: TReject);
 
     property Active: boolean read FActive write SetActive;
@@ -97,7 +97,7 @@ type
 constructor TBaseProtocolClient.Create;
 begin
   FState := TConnectionState.Disconnected;
-  FPendingRequests := TDictionary<integer, TProc<TProtocolMessage>>.Create();
+  FPendingRequests := TDictionary<integer, TProc<TResponse>>.Create();
   FEventSubscribers := TList<TEventNotification>.Create();
   FContentLenght := -1;
 end;
@@ -137,9 +137,9 @@ begin
 end;
 
 procedure TBaseProtocolClient.DoHandleResponse(
-  const AResponse: TProtocolMessage);
+  const AResponse: TResponse);
 begin
-  var LRequestSeq := TDefaultResponse(AResponse).RequestSeq;
+  var LRequestSeq := AResponse.RequestSeq;
   if FPendingRequests.ContainsKey(LRequestSeq) then begin
     var LCallback := FPendingRequests.ExtractPair(LRequestSeq).Value;
     LCallback(AResponse);
@@ -147,7 +147,7 @@ begin
 end;
 
 procedure TBaseProtocolClient.DoHandleEvent(
-  const AEvent: TProtocolMessage);
+  const AEvent: TEvent);
 begin
   for var LSubscriber in FEventSubscribers do begin
     LSubscriber(AEvent);
@@ -162,31 +162,34 @@ end;
 
 function TBaseProtocolClient.IsEvent(const AMessage: TProtocolMessage): boolean;
 begin
-  Result := AMessage.MessageType = TMessageType.Event;
+  Result := (AMessage.MessageType = TMessageType.Event)
+    and (AMessage is TEvent);
 end;
 
 function TBaseProtocolClient.IsRequest(
   const AMessage: TProtocolMessage): boolean;
 begin
-  Result := AMessage.MessageType = TMessageType.Request;
+  Result := (AMessage.MessageType = TMessageType.Request)
+    and (AMessage is TRequest);
 end;
 
 function TBaseProtocolClient.IsResponse(
   const AMessage: TProtocolMessage): boolean;
 begin
-  Result := AMessage.MessageType = TMessageType.Response;
+  Result := (AMessage.MessageType = TMessageType.Response)
+    and (AMessage is TResponse);
 end;
 
-procedure TBaseProtocolClient.SendRequest<T>(const AMessage: TProtocolMessage;
+procedure TBaseProtocolClient.SendRequest<T>(const AMessage: TRequest;
   const AResolve: TResolve<T>; const AReject: TReject);
 begin
   FPendingRequests.Add(AMessage.Seq,
-    procedure(AProtocolMessage: TProtocolMessage)
+    procedure(AProtocolMessage: TResponse)
     begin
-      if TDefaultResponse(AProtocolMessage).Success then
+      if AProtocolMessage.Success then
         AResolve(AProtocolMessage as T)
       else
-        AReject(TDefaultResponse(AProtocolMessage).Message);
+        AReject(AProtocolMessage.Message);
     end);
   SendData(TBaseProtocolParser.EncodeMessage(AMessage));
 end;
@@ -238,7 +241,7 @@ var
   LRttiCtx: TRttiContext;
 begin
   Result := SubscribeToEvent(
-    procedure(const AEvent: TProtocolMessage)
+    procedure(const AEvent: TEvent)
     begin
       var LRttiType := LRttiCtx.GetType(T);
       if (LRttiType.IsInstance
@@ -251,9 +254,9 @@ function TBaseProtocolClient.SubscribeToEvent<T>(const AEventType: TEventType;
   const AEventNotification: TEventNotification): IUnsubscribable;
 begin
   Result := SubscribeToEvent(
-    procedure(const AEvent: TProtocolMessage)
+    procedure(const AEvent: TEvent)
     begin
-      if (TDefaultEvent(AEvent).Event = AEventType) then
+      if (AEvent.Event = AEventType) then
         AEventNotification(AEvent);
     end);
 end;
@@ -293,11 +296,11 @@ end;
 procedure TBaseProtocolClient.HandleMessage(const AMessage: TProtocolMessage);
 begin
   if IsResponse(AMessage) then
-    DoHandleResponse(AMessage)
+    DoHandleResponse(AMessage as TResponse)
   else if IsEvent(AMessage) then
-    DoHandleEvent(AMessage)
+    DoHandleEvent(AMessage as TEvent)
   else if IsRequest(AMessage) then
-    DoHandleRequest(AMessage)
+    DoHandleRequest(AMessage as TRequest)
 end;
 
 { TUnsubscribable }
