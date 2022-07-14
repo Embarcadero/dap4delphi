@@ -37,6 +37,10 @@ contains
   BaseProtocol.Events in '..\source\BaseProtocol.Events.pas',
   BaseProtocol.ReverseRequests in '..\source\BaseProtocol.ReverseRequests.pas',
   BaseProtocol.Requests in '..\source\BaseProtocol.Requests.pas',
-  BaseProtocol.Json in '..\source\BaseProtocol.Json.pas';
+  BaseProtocol.Json in '..\source\BaseProtocol.Json.pas',
+  BaseProtocol.Helpers in '..\source\BaseProtocol.Helpers.pas',
+  BaseProtocol.Client.Socket in '..\source\client\BaseProtocol.Client.Socket.pas',
+  BaseProtocol.Client in '..\source\client\BaseProtocol.Client.pas',
+  BaseProtocol.Parser in '..\source\BaseProtocol.Parser.pas';
 
 end.

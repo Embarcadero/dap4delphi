@@ -4,6 +4,7 @@ interface
 
 uses
   System.Rtti,
+  System.Generics.Collections,
   Rest.Json.Types,
   Rest.JsonReflect,
   BaseProtocol,
@@ -12,7 +13,7 @@ uses
 
 type
   [EventType(TEventType.Initialized)]
-  TInitializedEvent<T> = class(TEvent<T>);
+  TInitializedEvent = class(TEvent<TEmptyBody>);
 
   TStoppedEventBody = class(TBaseType)
   private
@@ -91,7 +92,7 @@ type
   end;
 
   [EventType(TEventType.Thread)]
-  TThreadEvent = class(TEvent<TThreadEventBody>)end;
+  TThreadEvent = class(TEvent<TThreadEventBody>);
 
   TOutputEventBody<TData> = class(TBaseType)
   private
@@ -122,9 +123,10 @@ type
     property Column: integer read FColumn write FColumn;
     property Data: TData read FData write FData;
   end;
+  TDefaultOutputEventBody = TOutputEventBody<TValue>;
 
   [EventType(TEventType.Output)]
-  TOutputEvent = class(TEvent<TOutputEventBody<TValue>>);
+  TOutputEvent = class(TEvent<TDefaultOutputEventBody>);
 
   TBreakpointEventBody = class(TBaseType)
   private
@@ -296,5 +298,43 @@ type
   TMemoryEvent = class(TEvent<TMemoryEventBody>);
 
 implementation
+
+initialization
+  TProtocolMessage.RegisterEvent(TEventType.Breakpoint, TBreakpointEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Capabilities, TCapabilitiesEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Continued, TContinuedEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Exited, TExitedEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Initialized, TInitializedEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Invalidated, TInvalidatedEvent);
+  TProtocolMessage.RegisterEvent(TEventType.LoadedSource, TLoadedSourceEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Memory, TMemoryEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Module, TModuleEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Output, TOutputEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Process, TProcessEvent);
+  TProtocolMessage.RegisterEvent(TEventType.ProgressEnd, TProgressEndEvent);
+  TProtocolMessage.RegisterEvent(TEventType.ProgressStart, TProgressStartEvent);
+  TProtocolMessage.RegisterEvent(TEventType.ProgressUpdate, TProgressUpdateEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Stopped, TStoppedEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Terminated, TTerminatedEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Thread, TThreadEvent);
+
+finalization
+  TProtocolMessage.UnregisterEvent(TEventType.Breakpoint);
+  TProtocolMessage.UnregisterEvent(TEventType.Capabilities);
+  TProtocolMessage.UnregisterEvent(TEventType.Continued);
+  TProtocolMessage.UnregisterEvent(TEventType.Exited);
+  TProtocolMessage.UnregisterEvent(TEventType.Initialized);
+  TProtocolMessage.UnregisterEvent(TEventType.Invalidated);
+  TProtocolMessage.UnregisterEvent(TEventType.LoadedSource);
+  TProtocolMessage.UnregisterEvent(TEventType.Memory);
+  TProtocolMessage.UnregisterEvent(TEventType.Module);
+  TProtocolMessage.UnregisterEvent(TEventType.Output);
+  TProtocolMessage.UnregisterEvent(TEventType.Process);
+  TProtocolMessage.UnregisterEvent(TEventType.ProgressEnd);
+  TProtocolMessage.UnregisterEvent(TEventType.ProgressStart);
+  TProtocolMessage.UnregisterEvent(TEventType.ProgressUpdate);
+  TProtocolMessage.UnregisterEvent(TEventType.Stopped);
+  TProtocolMessage.UnregisterEvent(TEventType.Terminated);
+  TProtocolMessage.UnregisterEvent(TEventType.Thread);
 
 end.

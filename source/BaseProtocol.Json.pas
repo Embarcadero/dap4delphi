@@ -105,6 +105,7 @@ begin
   DoRegisterObjectListConverter<TCompletitionItem>(AMarshal);
   DoRegisterObjectListConverter<TExceptionDetail>(AMarshal);
   DoRegisterObjectListConverter<TDisassembleInstruction>(AMarshal);
+  DoRegisterObjectListConverter<TExceptionBreakpointsFilter>(AMarshal);
 
   AMarshal.RegisterConverter(TEmptyBody,
     function(Data: TObject): TObject
@@ -167,6 +168,7 @@ begin
   DoRegisterObjectListReverter<TCompletitionItem>(AUnmarshal);
   DoRegisterObjectListReverter<TExceptionDetail>(AUnmarshal);
   DoRegisterObjectListReverter<TDisassembleInstruction>(AUnmarshal);
+  DoRegisterObjectListReverter<TExceptionBreakpointsFilter>(AUnmarshal);
 
   AUnmarshal.RegisterReverter(TEmptyBody,
     function(Data: TObject): TObject
@@ -302,5 +304,9 @@ begin
     LRttiField.FieldType.Handle, LEnumValue);
   LRttiField.SetValue(Data, LEnumValue);
 end;
+
+initialization
+  TBaseProtocolJsonAdapter.RegisterConverters(TJSONConverters.GetJSONMarshaler());
+  TBaseProtocolJsonAdapter.RegisterReverters(TJSONConverters.GetJSONUnMarshaler());
 
 end.

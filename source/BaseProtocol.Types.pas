@@ -497,6 +497,7 @@ type
     property SupportsCondition: boolean read FSupportsCondition write FSupportsCondition;
     property ConditionDescription: string read FConditionDescription write FConditionDescription;
   end;
+  TExceptionBreakpointsFilters = TObjectList<TExceptionBreakpointsFilter>;
 
   TColumnDescriptor = class(TBaseType)
   private
@@ -531,7 +532,7 @@ type
     [JSONName('supportsEvaluateForHovers')]
     FSupportsEvaluateForHovers: boolean;
     [JSONName('exceptionBreakpointFilters'), Managed()]
-    FExceptionBreakpointFilters: TExceptionBreakpointsFilter;
+    FExceptionBreakpointFilters: TExceptionBreakpointsFilters;
     [JSONName('supportsStepBack')]
     FSupportsStepBack: boolean;
     [JSONName('supportsSetVariable')]
@@ -601,7 +602,7 @@ type
     property SupportsFunctionBreakpoints: boolean read FSupportsFunctionBreakpoints write FSupportsFunctionBreakpoints;
     property SupportsConditionalBreakpoints: boolean read FSupportsConditionalBreakpoints write FSupportsConditionalBreakpoints;
     property SupportsEvaluateForHovers: boolean read FSupportsEvaluateForHovers write FSupportsEvaluateForHovers;
-    property ExceptionBreakpointFilters: TExceptionBreakpointsFilter read FExceptionBreakpointFilters write FExceptionBreakpointFilters;
+    property ExceptionBreakpointFilters: TExceptionBreakpointsFilters read FExceptionBreakpointFilters write FExceptionBreakpointFilters;
     property SupportsStepBack: boolean read FSupportsStepBack write FSupportsStepBack;
     property SupportsSetVariable: boolean read FSupportsSetVariable write FSupportsSetVariable;
     property SupportsRestartFrame: boolean read FSupportsRestartFrame write FSupportsRestartFrame;
@@ -1096,10 +1097,15 @@ type
 
   TDisassembleInstructions = TObjectList<TDisassembleInstruction>;
 
+const
+  TWO_CRLF = sLineBreak + sLineBreak;
+  CONTENT_LENGTH_HEADER = 'Content-Length';
+
 implementation
 
 uses
-  System.TypInfo, System.SysUtils;
+  System.TypInfo, System.SysUtils,
+  BaseProtocol.Helpers;
 
 { TMessageTypeAttribute }
 
@@ -1128,11 +1134,13 @@ end;
 procedure TBaseType.AfterConstruction;
 begin
   inherited;
+  TGenericHelper.CreateFields(Self);
 end;
 
 procedure TBaseType.BeforeDestruction;
 begin
   inherited;
+  TGenericHelper.FreeFields(Self);
 end;
 
 { TChecksum }
@@ -1212,7 +1220,7 @@ begin
   begin
     if AStackFrame is TDefaultStackFrame then
       TDefaultStackFrame(AStackFrame).ModuleId := AValue
-    else if AStackFrame is  TStackFrame<Integer> then
+    else if AStackFrame is TStackFrame<Integer> then
       TStackFrame<Integer>(AStackFrame).ModuleId := AValue.AsInteger()
     else if AStackFrame is TStackFrame<String> then
       TStackFrame<String>(AStackFrame).ModuleId := AValue.AsString()
