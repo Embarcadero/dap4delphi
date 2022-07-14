@@ -98,6 +98,7 @@ type
   end;
 
   //Response classes
+  TResponseMessage = string;
   [MessageType(TMessageType.Response)]
   TResponse = class(TProtocolMessage)
   private
@@ -107,7 +108,7 @@ type
     FSuccess: boolean;
     [JSONName('command'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FCommand: TRequestCommand;
-    [JSONName('message'), JSONReflect(ctString, rtString, TEnumInterceptor)]
+    [JSONName('message')]
     FMessage: TResponseMessage;
   public
     procedure AfterConstruction(); override;

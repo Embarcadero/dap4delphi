@@ -80,10 +80,6 @@ type
     Terminated,
     Thread);
 
-  TResponseMessage = (
-    None,
-    Cancelled);
-
   TStoppedEventReason = (
     Step,
     Breakpoint,
