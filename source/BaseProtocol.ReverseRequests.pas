@@ -49,6 +49,24 @@ type
 
   TRunInTerminalResponse = class(TResponse<TRunInTerminalResponseBody>);
 
+  TReverseRequestsRegistration = class
+  public
+    class procedure RegisterAll();
+    class procedure unregisterAll();
+  end;
+
 implementation
+
+{ TReverseRequestsRegistration }
+
+class procedure TReverseRequestsRegistration.RegisterAll;
+begin
+  TProtocolMessage.RegisterRequest(TRequestCommand.RunInTerminal, TRunInTerminalRequest, TRunInTerminalResponse);
+end;
+
+class procedure TReverseRequestsRegistration.unregisterAll;
+begin
+  TProtocolMessage.UnregisterRequest(TRequestCommand.RunInTerminal);
+end;
 
 end.

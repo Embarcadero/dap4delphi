@@ -58,6 +58,8 @@ type
     [JSONName('supportsMemoryEvent')]
     FSupportsMemoryEvent: boolean;
   public
+    constructor Create();
+
     property ClientId: string read FClientId write FClientId;
     property ClientName: string read FClientName write FClientName;
     property AdapterId: string read FAdapterId write FAdapterId;
@@ -1031,8 +1033,31 @@ type
   end;
 
   TDisassembleResponse = class(TResponse<TDisassembleResponseBody>);
-  
+
+  TRequestsRegistration = class
+  public
+    class procedure RegisterAll();
+    class procedure unregisterAll();
+  end;
+
 implementation
+
+{ TInitializeRequestArguments }
+
+constructor TInitializeRequestArguments.Create;
+begin
+  inherited;
+  FLinesStartAt1 := true;
+  FColumnsStartAt1 := true;
+  FPathFormat := TPathFormat.Path;
+  FSupportsVariableType := true;
+  FSupportsVariablePaging := true;
+  FSupportsRunInTerminalRequest := true;
+  FSupportsMemoryReferences := true;
+  FSupportsProgressReporting := true;
+  FSupportsInvalidatedEvent := true;
+  FSupportsMemoryEvent := true;
+end;
 
 { TRestartArguments }
 
@@ -1042,7 +1067,10 @@ begin
   FArguments.Free();
 end;
 
-initialization
+{ TRequestsRegistration }
+
+class procedure TRequestsRegistration.RegisterAll;
+begin
   TProtocolMessage.RegisterRequest(TRequestCommand.Attach, TAttachRequest, TAttachResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.BreakpointLocations, TBreakpointLocationsRequest, TBreakpointLocationsResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.Cancel, TCancelRequest, TCancelResponse);
@@ -1086,8 +1114,10 @@ initialization
   TProtocolMessage.RegisterRequest(TRequestCommand.Threads, TThreadsRequest, TThreadsResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.Variables, TVariablesRequest, TVariablesResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.WriteMemory, TWriteMemoryRequest, TWriteMemoryResponse);
+end;
 
-finalization
+class procedure TRequestsRegistration.unregisterAll;
+begin
   TProtocolMessage.UnregisterRequest(TRequestCommand.Attach);
   TProtocolMessage.UnregisterRequest(TRequestCommand.BreakpointLocations);
   TProtocolMessage.UnregisterRequest(TRequestCommand.Cancel);
@@ -1131,5 +1161,6 @@ finalization
   TProtocolMessage.UnregisterRequest(TRequestCommand.Threads);
   TProtocolMessage.UnregisterRequest(TRequestCommand.Variables);
   TProtocolMessage.UnregisterRequest(TRequestCommand.WriteMemory);
+end;
 
 end.
