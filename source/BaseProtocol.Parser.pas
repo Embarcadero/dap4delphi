@@ -86,6 +86,9 @@ begin
   Result := nil;
   var LJSON := TJSONValue.ParseJSONValue(AProtocolMessage);
   try
+    if not (LJSON is TJSONObject) then
+      raise Exception.Create('Unexpected JSON type.');
+
     var LUnMarshaler := TJSONConverters.GetJSONUnMarshaler;
     try
       Result := LUnMarshaler.CreateObject(
