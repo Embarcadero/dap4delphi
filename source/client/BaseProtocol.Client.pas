@@ -18,8 +18,12 @@ type
   {$SCOPEDENUMS OFF}
   TResolve<T> = reference to procedure(const AArg: T);
   TReject = reference to procedure(const AArg: TResponseMessage);
+
   TEventNotification<T: TEvent> = reference to procedure(const AEvent: T);
   TEventNotification = TEventNotification<TEvent>;
+
+  TReverseRequestNotification<T: TRequest> = reference to procedure(const AReverseRequest: T);
+  TReverseRequestNotification = TReverseRequestNotification<TRequest>;
 
   IUnsubscribable = interface
     ['{6E085AE3-0AE4-4CAF-9921-12902D1633B6}']
@@ -32,12 +36,13 @@ type
     FState: TConnectionState;
     FPendingRequests: TDictionary<integer, TProc<TResponse>>;
     FEventSubscribers: TList<TEventNotification>;
+    FReverseRequestHandlers: TList<TReverseRequestNotification>;
     FTask: ITask;
     FBuffer: string;
     FContentLenght: integer;
     procedure DoHandleResponse(const AResponse: TResponse);
     procedure DoHandleEvent(const AEvent: TEvent);
-    procedure DoHandleRequest(const ARequest: TProtocolMessage);
+    procedure DoHandleRequest(const ARequest: TRequest);
     procedure SetActive(const Value: boolean);
   protected
     procedure InternalConnect(); virtual; abstract;
@@ -66,8 +71,21 @@ type
     function SubscribeToEvent<T: TEvent>(
       const AEventNotification: TEventNotification<T>): IUnsubscribable; overload;
 
-    procedure SendRequest<T: TResponse>(const AMessage: TRequest;
+    function SubscribeToReverseRequest(
+      const AReverseRequestNotification: TReverseRequestNotification): IUnsubscribable; overload;
+    function SubscribeToReverseRequest(const ARequestCommand: TRequestCommand;
+      const AReverseRequestNotification: TReverseRequestNotification): IUnsubscribable; overload;
+    function SubscribeToReverseRequest<T: TRequest>(
+      const AReverseRequestNotification: TReverseRequestNotification<T>): IUnsubscribable; overload;
+
+    procedure SendRequest<T: TResponse>(const ARequest: TRequest;
       const AResolve: TResolve<T>; const AReject: TReject);
+    procedure SendResponse<T: TResponse>(const ARequest: TRequest;
+      const AResponse: TResponse);
+    procedure SendResponseSuccess<T: TResponse>(const ARequest: TRequest;
+      const AResponse: TResponse);
+    procedure SendResponseError<T: TResponse>(const ARequest: TRequest;
+      const AResponse: TResponse);
 
     property Active: boolean read FActive write SetActive;
     property State: TConnectionState read FState;
@@ -99,6 +117,7 @@ begin
   FState := TConnectionState.Disconnected;
   FPendingRequests := TDictionary<integer, TProc<TResponse>>.Create();
   FEventSubscribers := TList<TEventNotification>.Create();
+  FReverseRequestHandlers := TList<TReverseRequestNotification>.Create();
   FContentLenght := -1;
 end;
 
@@ -107,6 +126,7 @@ begin
   FActive := false;
   if Assigned(FTask) then
     FTask.Wait();
+  FReverseRequestHandlers.Free();
   FEventSubscribers.Free();
   FPendingRequests.Free();
   inherited;
@@ -155,9 +175,11 @@ begin
 end;
 
 procedure TBaseProtocolClient.DoHandleRequest(
-  const ARequest: TProtocolMessage);
+  const ARequest: TRequest);
 begin
-
+  for var LHandler in FReverseRequestHandlers do begin
+    LHandler(ARequest);
+  end;
 end;
 
 function TBaseProtocolClient.IsEvent(const AMessage: TProtocolMessage): boolean;
@@ -180,10 +202,10 @@ begin
     and (AMessage is TResponse);
 end;
 
-procedure TBaseProtocolClient.SendRequest<T>(const AMessage: TRequest;
+procedure TBaseProtocolClient.SendRequest<T>(const ARequest: TRequest;
   const AResolve: TResolve<T>; const AReject: TReject);
 begin
-  FPendingRequests.Add(AMessage.Seq,
+  FPendingRequests.Add(ARequest.Seq,
     procedure(AProtocolMessage: TResponse)
     begin
       if AProtocolMessage.Success then
@@ -191,7 +213,29 @@ begin
       else
         AReject(AProtocolMessage.Message);
     end);
-  SendData(TBaseProtocolParser.EncodeMessage(AMessage));
+  SendData(TBaseProtocolParser.EncodeMessage(ARequest));
+end;
+
+procedure TBaseProtocolClient.SendResponse<T>(const ARequest: TRequest;
+  const AResponse: TResponse);
+begin
+  AResponse.RequestSeq := ARequest.Seq;
+  AResponse.Command := ARequest.Command;
+  SendData(TBaseProtocolParser.EncodeMessage(AResponse));
+end;
+
+procedure TBaseProtocolClient.SendResponseError<T>(const ARequest: TRequest;
+  const AResponse: TResponse);
+begin
+  AResponse.Success := false;
+  SendResponse<T>(ARequest, AResponse);
+end;
+
+procedure TBaseProtocolClient.SendResponseSuccess<T>(const ARequest: TRequest;
+  const AResponse: TResponse);
+begin
+  AResponse.Success := true;
+  SendResponse<T>(ARequest, AResponse);
 end;
 
 procedure TBaseProtocolClient.SetActive(const Value: boolean);
@@ -258,6 +302,44 @@ begin
     begin
       if (AEvent.Event = AEventType) then
         AEventNotification(AEvent);
+    end);
+end;
+
+function TBaseProtocolClient.SubscribeToReverseRequest(
+  const AReverseRequestNotification: TReverseRequestNotification): IUnsubscribable;
+begin
+  FReverseRequestHandlers.Add(AReverseRequestNotification);
+  Result := TUnsubscribable.Create(
+    procedure
+    begin
+      FReverseRequestHandlers.Remove(AReverseRequestNotification);
+    end);
+end;
+
+function TBaseProtocolClient.SubscribeToReverseRequest(
+  const ARequestCommand: TRequestCommand;
+  const AReverseRequestNotification: TReverseRequestNotification): IUnsubscribable;
+begin
+  Result := SubscribeToReverseRequest(
+    procedure(const AReverseRequest: TRequest)
+    begin
+      if (AReverseRequest.Command = ARequestCommand) then
+        AReverseRequestNotification(AReverseRequest);
+    end);
+end;
+
+function TBaseProtocolClient.SubscribeToReverseRequest<T>(
+  const AReverseRequestNotification: TReverseRequestNotification<T>): IUnsubscribable;
+var
+  LRttiCtx: TRttiContext;
+begin
+  Result := SubscribeToReverseRequest(
+    procedure(const AReverseRequest: TRequest)
+    begin
+      var LRttiType := LRttiCtx.GetType(T);
+      if (LRttiType.IsInstance
+        and (LRttiType.AsInstance.MetaclassType = AReverseRequest.ClassType)) then
+          AReverseRequestNotification(AReverseRequest as T);
     end);
 end;
 
