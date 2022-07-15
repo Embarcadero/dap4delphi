@@ -38,7 +38,9 @@ implementation
 
 uses
   System.Rtti, System.TypInfo, System.SysUtils, System.Classes, System.Character,
-  System.Generics.Collections, BaseProtocol.Types;
+  System.Generics.Collections,
+  BaseProtocol.Types,
+  BaseProtocol.Events;
 
 const
   DEFAULT_NULL_ENUM_ITEM_NAME = 'None';
@@ -188,7 +190,7 @@ begin
       raise ENotImplemented.Create('Not implemented.');
     end);
 
-  AUnmarshal.RegisterReverter(TDefaultStackFrame, 'FModuleId',
+  AUnmarshal.RegisterReverter(TDefaultStackFrame, 'moduleId',
     procedure(Data: TObject; Field, Arg: string)
     var
       LInteger: integer;
@@ -199,10 +201,16 @@ begin
         TDefaultStackFrame(Data).ModuleId := Arg;
     end);
 
-  AUnmarshal.RegisterReverter(TDefaultSource, 'FAdapterData',
+  AUnmarshal.RegisterReverter(TDefaultSource, 'adapterData',
     procedure(Data: TObject; Field, Arg: string)
     begin
       TDefaultSource(Data).AdapterData := Arg;
+    end);
+
+  AUnmarshal.RegisterReverter(TUnknownEvent, 'event',
+    procedure(Data: TObject; Field, Arg: string)
+    begin
+      TUnknownEvent(Data).EventDescription := Arg;
     end);
 end;
 
