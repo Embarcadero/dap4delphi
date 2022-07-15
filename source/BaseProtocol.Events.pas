@@ -14,7 +14,7 @@ uses
 type
   [EventType(TEventType(-1))]
   [EventType(TEventType.Unknown)]
-  TUnknownEvent = class(TEvent<TEmptyBody>)
+  TUnknownEvent = class(TEvent<TDynamicBody>)
   private
     FEventDescription: string;
   public
@@ -103,7 +103,7 @@ type
   [EventType(TEventType.Thread)]
   TThreadEvent = class(TEvent<TThreadEventBody>);
 
-  TOutputEventBody<TData> = class(TBaseType)
+  TOutputEventBody = class(TBaseType)
   private
     [JSONName('category'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FCategory: TOutputEventCategory;
@@ -114,28 +114,34 @@ type
     [JSONName('variablesReference')]
     FVariablesReference: integer;
     [Managed()]
-    [JSONName('source')]
-    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
     FColumn: integer;
-    [JSONName('data')]
-    FData: TData;
   public
     property Category: TOutputEventCategory read FCategory write FCategory;
     property Output: string read FOutput write FOutput;
     property Group: TOutputEventGroup read FGroup write FGroup;
     property VariablesReference: integer read FVariablesReference write FVariablesReference;
-    property Source: TDefaultSource read FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
+  end;
+
+  TOutputEventBody<TData, TAdapterData> = class(TOutputEventBody)
+  private
+    [JSONName('source'), Managed()]
+    FSource: TSource<TAdapterData>;
+    [JSONName('data'), Managed()]
+    FData: TData;
+  public
+    property Source: TSource<TAdapterData> read FSource;
     property Data: TData read FData write FData;
   end;
-  TDefaultOutputEventBody = TOutputEventBody<TValue>;
 
   [EventType(TEventType.Output)]
-  TOutputEvent = class(TEvent<TDefaultOutputEventBody>);
+  TOutputEvent<TData, TAdapterData> = class(TEvent<TOutputEventBody<TData, TAdapterData>>);
+
+  TDynamicOutputEvent = TOutputEvent<TDynamicData, TDynamicData>;
 
   TBreakpointEventBody = class(TBaseType)
   private
@@ -170,16 +176,22 @@ type
   private
     [JSONName('reason'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FReason: TLoadedSourceEventReason;
-    [Managed()]
-    [JSONName('source')]
-    FSource: TDefaultSource;
   public
     property Reason: TLoadedSourceEventReason read FReason write FReason;
-    property Source: TDefaultSource read FSource;
+  end;
+
+  TLoadedSourceEventBody<TAdapterData> = class(TLoadedSourceEventBody)
+  private
+    [JSONName('source'), Managed()]
+    FSource: TSource<TAdapterData>;
+  public
+    property Source: TSource<TAdapterData> read FSource;
   end;
 
   [EventType(TEventType.LoadedSource)]
-  TLoadedSourceEvent = class(TEvent<TLoadedSourceEventBody>);
+  TLoadedSourceEvent<TAdapterData> = class(TEvent<TLoadedSourceEventBody<TAdapterData>>);
+
+  TDynamicLoadedSourceEvent = TLoadedSourceEvent<TDynamicData>;
 
   TProcessEventBody = class(TBaseType)
   private
@@ -325,10 +337,10 @@ begin
   TProtocolMessage.RegisterEvent(TEventType.Exited, TExitedEvent);
   TProtocolMessage.RegisterEvent(TEventType.Initialized, TInitializedEvent);
   TProtocolMessage.RegisterEvent(TEventType.Invalidated, TInvalidatedEvent);
-  TProtocolMessage.RegisterEvent(TEventType.LoadedSource, TLoadedSourceEvent);
+  TProtocolMessage.RegisterEvent(TEventType.LoadedSource, TDynamicLoadedSourceEvent);
   TProtocolMessage.RegisterEvent(TEventType.Memory, TMemoryEvent);
   TProtocolMessage.RegisterEvent(TEventType.Module, TModuleEvent);
-  TProtocolMessage.RegisterEvent(TEventType.Output, TOutputEvent);
+  TProtocolMessage.RegisterEvent(TEventType.Output, TDynamicOutputEvent);
   TProtocolMessage.RegisterEvent(TEventType.Process, TProcessEvent);
   TProtocolMessage.RegisterEvent(TEventType.ProgressEnd, TProgressEndEvent);
   TProtocolMessage.RegisterEvent(TEventType.ProgressStart, TProgressStartEvent);

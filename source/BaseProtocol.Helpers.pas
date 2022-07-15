@@ -75,11 +75,13 @@ begin
     try
       var LRttiType := LRttiCtx.GetType(ATypeInfo);
       for var LRttiMethod in LRttiType.GetMethods() do begin
-        if LRttiMethod.IsConstructor and not LRttimethod.IsStatic then begin
-          if Length(LRttimethod.GetParameters()) = 0 then begin
-            TObject(AValue) := LRttimethod.Invoke(ATypeInfo^.TypeData^.ClassType, []).AsObject();
-            Exit;
-          end;
+        if LRttiMethod.HasExtendedInfo
+          and LRttiMethod.IsConstructor
+          and (Length(LRttimethod.GetParameters()) = 0) then
+        begin
+          TObject(AValue) := LRttimethod.Invoke(
+            ATypeInfo^.TypeData^.ClassType, []).AsObject();
+          Exit;
         end;
       end;
     finally

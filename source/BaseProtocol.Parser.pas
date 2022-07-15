@@ -82,8 +82,9 @@ end;
 
 class function TBaseProtocolParser.DecodeMessage(
   const AProtocolMessage: string): TProtocolMessage;
+var
+  LRttiCtx: TRttiContext;
 begin
-  Result := nil;
   var LJSON := TJSONValue.ParseJSONValue(AProtocolMessage);
   try
     if not (LJSON is TJSONObject) then
@@ -91,11 +92,22 @@ begin
 
     var LUnMarshaler := TJSONConverters.GetJSONUnMarshaler;
     try
-      Result := LUnMarshaler.CreateObject(
-        GetProtocolMessageType(
-          LJSON as TJSONObject),
-        LJSON as TJSONObject,
-        TObject(Result)) as TProtocolMessage;
+      var LClass := GetProtocolMessageType(LJSON as TJSONObject);
+      var LInstance := TJSONUnMarshal.ObjectInstance(LRttiCtx, LClass.QualifiedClassName);
+      try
+        if not Assigned(LInstance) then
+          raise Exception.Create('Cannot parse JSON.');
+
+        TProtocolMessage(LInstance).Raw := AProtocolMessage;
+
+        Result := LUnMarshaler.CreateObject(
+          LClass, LJSON as TJSONObject, LInstance) as TProtocolMessage;
+      except
+        on E: Exception do begin
+          LInstance.Free();
+          raise;
+        end;
+      end;
     finally
       LUnMarshaler.Free;
     end;

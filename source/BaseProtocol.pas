@@ -19,6 +19,8 @@ type
     class var FResponses: TDictionary<TRequestCommand, TClass>;
     class var FEvents: TDictionary<TEventType, TClass>;
   private
+    [JSONMarshalled(false)]
+    FRaw: string;
     [JSONName('seq')]
     FSeq: integer;
     [JSONName('type'), JSONReflect(ctString, rtString, TEnumInterceptor)]
@@ -40,6 +42,9 @@ type
     class procedure UnregisterRequest(const ARequestCommand: TRequestCommand);
     class procedure RegisterEvent(const AEventType: TEventType; const AClass: TClass);
     class procedure UnregisterEvent(const AEventType: TEventType);
+
+    //Raw data - commonly a JSON string
+    property Raw: string read FRaw write FRaw;
 
     //Protocol message handlers
     class property Requests: TDictionary<TRequestCommand, TClass> read FRequests;

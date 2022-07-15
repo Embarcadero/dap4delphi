@@ -307,11 +307,17 @@ type
 
   {----------|| Empty Data ||----------}
 
+  TDynamicData = TValue;
+
   TEmptyArguments = class
   end;
 
+  TDynamicArguments = TDynamicData;
+
   TEmptyBody = class
   end;
+
+  TDynamicBody = TDynamicData;
 
  {----------|| BaseProtocol Types ||----------}
 
@@ -357,13 +363,11 @@ type
     property Algorithm: TChecksumAlgorithm read FAlgorithm write FAlgorithm;
     property Checksum: string read FChecksum write FChecksum;
   end;
+  TCheckSums = TObjectList<TChecksum>;
 
-  TSource<TAdapterData> = class;
-  TDefaultSource = TSource<TValue>;
-  TSources = TObjectList<TDefaultSource>;
-  TSource<TAdapterData> = class(TBaseType)
-  private type
-    TCheckSums = TObjectList<TChecksum>;
+  TSource = class;
+  TSources = TObjectList<TSource>;
+  TSource = class(TBaseType)
   private
     [JSONName('name')]
     FName: string;
@@ -378,11 +382,7 @@ type
     [Managed()]
     [JSONName('sources')]
     FSources: TSources;
-    [Managed()]
-    [JSONName('adapterData')]
-    FAdapterData: TAdapterData;
-    [Managed()]
-    [JSONName('checksums')]
+    [JSONName('checksums'), Managed()]
     FChecksums: TCheckSums;
   public
     procedure Assign(Source: TPersistent); override;
@@ -393,9 +393,22 @@ type
     property PresentationHint: TSourcePresentationHint read FPresentationHint write FPresentationHint;
     property Origin: string read FOrigin write FOrigin;
     property Sources: TSources read FSources;
-    property AdapterData: TAdapterData read FAdapterData write FAdapterData;
     property Checksums: TCheckSums read FChecksums;
   end;
+
+  TSource<TAdapterData> = class(TSource)
+  private
+    [Managed()]
+    [JSONName('adapterData')]
+    FAdapterData: TAdapterData;
+    [Managed()]
+  public
+    procedure Assign(Source: TPersistent); override;
+
+    property AdapterData: TAdapterData read FAdapterData write FAdapterData;
+  end;
+
+  TDynamicSource = TSource<TDynamicData>;
 
   TBreakpoint = class(TBaseType)
   private
@@ -405,9 +418,6 @@ type
     FVerified: boolean;
     [JSONName('message')]
     FMessage: string;
-    [Managed()]
-    [JSONName('source')]
-    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -424,7 +434,6 @@ type
     property Id: integer read FId write FId;
     property Verified: boolean read FVerified write FVerified;
     property Message: string read FMessage write FMessage;
-    property Source: TDefaultSource read FSource write FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
@@ -433,7 +442,18 @@ type
     property Offset: integer read FOffset write FOffset;
   end;
 
+  TBreakpoint<TAdapterData> = class(TBreakpoint)
+  private
+    [JSONName('source'), Managed()]
+    FSource: TSource<TAdapterData>;
+  public
+    property Source: TSource<TAdapterData> read FSource write FSource;
+  end;
+
+  TDynamicBreakpoint = TBreakpoint<TDynamicData>;
+
   TBreakpoints = TObjectList<TBreakpoint>;
+  TDynamicBreakpoints = TObjectList<TDynamicBreakpoint>;
 
   TModule = class(TBaseType)
   private
@@ -792,17 +812,13 @@ type
     property IncludeAll: boolean read FIncludeAll write FIncludeAll;
   end;
 
-  TIntegerOrString = TValue;
-  TStackFrame<TModuleId> = class;
-  TDefaultStackFrame = TStackFrame<TIntegerOrString>;
-  TStackFrame<TModuleId> = class(TBaseType)
+  TIntegerOrString = TDynamicData;
+  TStackFrame = class(TBaseType)
   private
     [JSONName('id')]
     FId: integer;
     [JSONName('name')]
     FName: string;
-    [JSONName('source'), Managed()]
-    FSource: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -815,8 +831,6 @@ type
     FCanRestart: boolean;
     [JSONName('instructionPointerReference')]
     FInstructionPointerReference: String;
-    [JSONName('moduleId')]
-    FModuleId: TModuleId;
     [JSONName('presentationHint'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FPresentationHint: TStackFramePresentationHint;
   public
@@ -824,18 +838,30 @@ type
 
     property Id: integer read FId write FId;
     property Name: string read FName write FName;
-    property Source: TDefaultSource read FSource write FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
     property EndColumn: integer read FEndColumn write FEndColumn;
     property CanRestart: boolean read FCanRestart write FCanRestart;
     property InstructionPointerReference: String read FInstructionPointerReference write FInstructionPointerReference;
-    property ModuleId: TModuleId read FModuleId write FModuleId;
     property PresentationHint: TStackFramePresentationHint read FPresentationHint write FPresentationHint;
   end;
 
-  TStackFrames = TObjectList<TDefaultStackFrame>;
+  TStackFrame<TModuleId, TAdapterData> = class(TStackFrame)
+  private
+    [JSONName('source'), Managed()]
+    FSource: TSource<TAdapterData>;
+    [JSONName('moduleId')]
+    FModuleId: TModuleId;
+  public
+    procedure Assign(Source: TPersistent); override;
+
+    property Source: TSource<TAdapterData> read FSource write FSource;
+    property ModuleId: TModuleId read FModuleId write FModuleId;
+  end;
+
+  TDynamicStackFrame = TStackFrame<TIntegerOrString, TDynamicData>;
+  TStackFrames = TObjectList<TStackFrame>;
 
   TScope = class(TBaseType)
   private
@@ -852,7 +878,7 @@ type
     [JSONName('expensive')]
     FExpensive: Boolean;
     [JSONName('source'), Managed()]
-    FSource: TDefaultSource;
+    FSource: TDynamicSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -868,14 +894,26 @@ type
     property NamedVariables: integer read FNamedVariables write FNamedVariables;
     property IndexedVariables: integer read FIndexedVariables write FIndexedVariables;
     property Expensive: boolean read FExpensive write FExpensive;
-    property Source: TDefaultSource read FSource write FSource;
+    property Source: TDynamicSource read FSource write FSource;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
     property EndColumn: integer read FEndColumn write FEndColumn;
   end;
 
+  TScope<TAdapterData> = class(TScope)
+  private
+    [JSONName('source'), Managed()]
+    FSource: TSource<TAdapterData>;
+  public
+    property Source: TSource<TAdapterData> read FSource write FSource;
+  end;
+
+  TDynamicScope = TScope<TDynamicData>;
+
   TScopes = TObjectList<TScope>;
+
+  TDynamicScopes = TObjectList<TDynamicScope>;
 
   TValueFormat = class(TBaseType)
   private
@@ -1070,8 +1108,6 @@ type
     FInstruction: string;
     [JSONName('symbol')]
     FSymbol: string;
-    [JSONName('location'), Managed()]
-    FLocation: TDefaultSource;
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -1085,14 +1121,25 @@ type
     property InstructionBytes: string read FInstructionBytes write FInstructionBytes;
     property Instruction: string read FInstruction write FInstruction;
     property Symbol: string read FSymbol write FSymbol;
-    property Location: TDefaultSource read FLocation write FLocation;
     property Line: integer read FLine write FLine;
     property Column: integer read FColumn write FColumn;
     property EndLine: integer read FEndLine write FEndLine;
     property EndColumn: integer read FEndColumn write FEndColumn;
   end;
 
+  TDisassembleInstruction<TAdapterData> = class(TDisassembleInstruction)
+  private
+    [JSONName('location'), Managed()]
+    FLocation: TSource<TAdapterData>;
+  public
+    property Location: TSource<TAdapterData> read FLocation write FLocation;
+  end;
+
+  TDynamicDisassembleInstruction = TDisassembleInstruction<TDynamicData>;
+
   TDisassembleInstructions = TObjectList<TDisassembleInstruction>;
+
+  TDynamicDisassembleInstructions = TObjectList<TDynamicDisassembleInstruction>;
 
 const
   TWO_CRLF = sLineBreak + sLineBreak;
@@ -1149,78 +1196,131 @@ begin
   Self.Checksum := TChecksum(Source).Checksum;
 end;
 
-{ TSource<TAdapterData> }
+{ TSource }
 
-procedure TSource<TAdapterData>.Assign(Source: TPersistent);
+procedure TSource.Assign(Source: TPersistent);
 var
   LNewItem: TPersistent;
 begin
-  inherited;
-  Self.Name := TDefaultSource(Source).Name;
-  Self.Path := TDefaultSource(Source).Path;
-  Self.SourceReference := TDefaultSource(Source).SourceReference;
-  Self.PresentationHint := TDefaultSource(Source).PresentationHint;
-  Self.Origin := TDefaultSource(Source).Origin;
-  { TODO : Fix here when we get the AdapterData type possibilities }
-  for var LItem in Self.Sources do begin
-    //Creates a identical instance type
-    LNewItem := LItem.ClassType.InitInstance(LNewItem) as TPersistent;
-    LNewItem.Create();
-    LNewItem.Assign(LItem);
-    TDefaultSource(Self).Sources.Add(TDefaultSource(LNewItem));
-  end;
+  Self.Name := TSource(Source).Name;
+  Self.Path := TSource(Source).Path;
+  Self.SourceReference := TSource(Source).SourceReference;
+  Self.PresentationHint := TSource(Source).PresentationHint;
+  Self.Origin := TSource(Source).Origin;
 
-  if (Source is TDefaultSource) then
-    TDefaultSource(Self).AdapterData := TDefaultSource(Source).AdapterData
-  else if Source is TSource<string> then
-    TDefaultSource(Self).AdapterData := TSource<string>(Source).AdapterData
-  else
-    raise Exception.Create('Invalid "AdapterData" type.');
-
-  for var LItem in Self.Checksums do begin
+  for var LItem in TSource(Source).Checksums do begin
     LNewItem := TChecksum.Create();
     LNewItem.Assign(LItem);
     Self.Checksums.Add(TChecksum(LNewItem));
   end;
 end;
 
-{ TStackFrame<TModuleId> }
+{ TSource<TAdapterData> }
 
-procedure TStackFrame<TModuleId>.Assign(Source: TPersistent);
+procedure TSource<TAdapterData>.Assign(Source: TPersistent);
+var
+  LNewItem: TPersistent;
+  LAdapterData: TValue;
+  LRttiCtx: TRttiContext;
+  LRttiType: TRttiType;
+  LRttiProp: TRttiProperty;
 begin
   inherited;
-  Self.Id := TDefaultStackFrame(Source).Id;
-  Self.Name := TDefaultStackFrame(Source).Name;
-  Self.Line := TDefaultStackFrame(Source).Line;
-  Self.Column := TDefaultStackFrame(Source).Column;
-  Self.EndLine := TDefaultStackFrame(Source).EndLine;
-  Self.EndColumn := TDefaultStackFrame(Source).EndColumn;
-  Self.CanRestart := TDefaultStackFrame(Source).CanRestart;
-  Self.InstructionPointerReference := TDefaultStackFrame(Source).InstructionPointerReference;
-  Self.PresentationHint := TDefaultStackFrame(Source).PresentationHint;
+  { TODO : Fix here when we get the AdapterData type possibilities }
+  for var LItem in Self.Sources do begin
+    //Creates an identical instance type
+    LNewItem := LItem.ClassType.InitInstance(LNewItem) as TPersistent;
+    LNewItem.Create();
+    LNewItem.Assign(LItem);
+    Self.Sources.Add(TSource(LNewItem));
+  end;
 
-  Self.Source.Assign(TDefaultStackFrame(Source).Source);
+  //Get value from source
+  LRttiType := LRttiCtx.GetType(Source.ClassInfo);
+  LRttiProp := LRttiType.GetProperty('AdapterData');
+  LAdapterData := LRttiProp.GetValue(Source);
+  if LAdapterData.TypeInfo = PTypeInfo(TypeInfo(TValue)) then begin
+    LAdapterData := LAdapterData.AsType<TValue>;
+  end;
+
+  //Set value to dest
+  LRttiType := LRttiCtx.GetType(Self.ClassInfo);
+  LRttiProp := LRttiType.GetProperty('AdapterData');
+
+  if (LRttiProp.PropertyType.TypeKind = tkClass) then
+    raise ENotImplemented.Create('Not implemented.');
+
+  if (LRttiProp.PropertyType.TypeKind = LAdapterData.Kind) then
+    LRttiProp.SetValue(Self, LAdapterData)
+  else
+    case LRttiProp.PropertyType.TypeKind of
+      tkUString: LRttiProp.SetValue(Self, LAdapterData.AsString());
+    end;
+end;
+
+{ TStackFrame }
+
+procedure TStackFrame.Assign(Source: TPersistent);
+begin
+  Self.Id := TStackFrame(Source).Id;
+  Self.Name := TStackFrame(Source).Name;
+  Self.Line := TStackFrame(Source).Line;
+  Self.Column := TStackFrame(Source).Column;
+  Self.EndLine := TStackFrame(Source).EndLine;
+  Self.EndColumn := TStackFrame(Source).EndColumn;
+  Self.CanRestart := TStackFrame(Source).CanRestart;
+  Self.InstructionPointerReference := TStackFrame(Source).InstructionPointerReference;
+  Self.PresentationHint := TStackFrame(Source).PresentationHint;
+end;
+
+{ TStackFrame<TModuleId, TAdapterData> }
+
+procedure TStackFrame<TModuleId, TAdapterData>.Assign(Source: TPersistent);
+var
+  LRttiCtx: TRttiContext;
+  LRttiType: TRttiType;
+  LRttiProp: TRttiProperty;
+  LData: TValue;
+begin
+  inherited;
+  LRttiType := LRttiCtx.GetType(Source.ClassInfo);
+  LRttiProp := LRttiType.GetProperty('Source');
+  if Assigned(LRttiProp) then begin
+    LData := LRttiProp.GetValue(Source);
+    if not LData.IsEmpty and LData.IsObject() then
+      Self.Source.Assign(LData.AsObject as TPersistent);
+  end;
 
   var GetModuleId := function(const AStackFrame: TPersistent): TValue
   begin
-    if (AStackFrame is TDefaultStackFrame) then
-      Result := TDefaultStackFrame(AStackFrame).ModuleId
-    else if AStackFrame is TStackFrame<Integer> then
-      Result :=  TStackFrame<Integer>(AStackFrame).ModuleId
-    else if AStackFrame is TStackFrame<String> then
-      Result :=  TStackFrame<String>(AStackFrame).ModuleId
+    LRttiType := LRttiCtx.GetType(AStackFrame.ClassInfo);
+    LRttiProp := LRttiType.GetProperty('ModuleId');
+    if Assigned(LRttiProp) then
+      Result := LRttiProp.GetValue(AStackFrame)
     else
-      raise Exception.Create('Invalid "ModuleId" type.');
+      Result := TValue.Empty;
   end;
 
   var SetModuleId := procedure(const AStackFrame: TPersistent; const AValue: TValue)
   begin
-    if AStackFrame is TDefaultStackFrame then
-      TDefaultStackFrame(AStackFrame).ModuleId := AValue
-    else if AStackFrame is TStackFrame<Integer> then
-      TStackFrame<Integer>(AStackFrame).ModuleId := AValue.AsInteger()
-    else if AStackFrame is TStackFrame<String> then
-      TStackFrame<String>(AStackFrame).ModuleId := AValue.AsString()
+    LRttiType := LRttiCtx.GetType(AStackFrame.ClassInfo);
+    LRttiProp := LRttiType.GetProperty('ModuleId');
+    case LRttiProp.PropertyType.TypeKind of
+      tkUnknown: begin
+        if (LRttiProp.PropertyType.Handle = PTypeInfo(TypeInfo(TDynamicData))) then
+          LRttiProp.SetValue(AStackFrame, AValue)
+        else
+          raise Exception.Create('Invalid "ModuleId" type.');
+      end;
+      tkInteger, tkUString: LRttiProp.SetValue(AStackFrame, AValue);
+    end;
+
+    if AStackFrame is TDynamicStackFrame then
+      TDynamicStackFrame(AStackFrame).ModuleId := AValue
+    else if AStackFrame is TStackFrame<Integer, TDynamicData> then
+      TStackFrame<Integer, TDynamicData>(AStackFrame).ModuleId := AValue.AsInteger()
+    else if AStackFrame is TStackFrame<String, TDynamicData> then
+      TStackFrame<String, TDynamicData>(AStackFrame).ModuleId := AValue.AsString()
     else
       raise Exception.Create('Invalid "ModuleId" type.');
   end;
