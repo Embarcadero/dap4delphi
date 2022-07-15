@@ -62,6 +62,7 @@ type
     WriteMemory);
 
   TEventType = (
+    Unknown,
     Breakpoint,
     Capabilities,
     Continued,
