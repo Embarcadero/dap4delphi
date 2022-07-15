@@ -12,6 +12,15 @@ uses
   BaseProtocol.Json;
 
 type
+  [EventType(TEventType(-1))]
+  [EventType(TEventType.Unknown)]
+  TUnknownEvent = class(TEvent<TEmptyBody>)
+  private
+    FEventDescription: string;
+  public
+    property EventDescription: string read FEventDescription write FEventDescription;
+  end;
+
   [EventType(TEventType.Initialized)]
   TInitializedEvent = class(TEvent<TEmptyBody>);
 
@@ -297,9 +306,19 @@ type
   [EventType(TEventType.Memory)]
   TMemoryEvent = class(TEvent<TMemoryEventBody>);
 
+  TEventsRegistration = class
+  public
+    class procedure RegisterAll();
+    class procedure UnregisterAll();
+  end;
+
 implementation
 
-initialization
+{ TEventsRegistration }
+
+class procedure TEventsRegistration.RegisterAll;
+begin
+  TProtocolMessage.RegisterEvent(TEventType(-1), TUnknownEvent);
   TProtocolMessage.RegisterEvent(TEventType.Breakpoint, TBreakpointEvent);
   TProtocolMessage.RegisterEvent(TEventType.Capabilities, TCapabilitiesEvent);
   TProtocolMessage.RegisterEvent(TEventType.Continued, TContinuedEvent);
@@ -317,8 +336,11 @@ initialization
   TProtocolMessage.RegisterEvent(TEventType.Stopped, TStoppedEvent);
   TProtocolMessage.RegisterEvent(TEventType.Terminated, TTerminatedEvent);
   TProtocolMessage.RegisterEvent(TEventType.Thread, TThreadEvent);
+end;
 
-finalization
+class procedure TEventsRegistration.UnregisterAll;
+begin
+  TProtocolMessage.UnregisterEvent(TEventType(-1));
   TProtocolMessage.UnregisterEvent(TEventType.Breakpoint);
   TProtocolMessage.UnregisterEvent(TEventType.Capabilities);
   TProtocolMessage.UnregisterEvent(TEventType.Continued);
@@ -336,5 +358,6 @@ finalization
   TProtocolMessage.UnregisterEvent(TEventType.Stopped);
   TProtocolMessage.UnregisterEvent(TEventType.Terminated);
   TProtocolMessage.UnregisterEvent(TEventType.Thread);
+end;
 
 end.
