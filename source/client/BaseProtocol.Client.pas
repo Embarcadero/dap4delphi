@@ -33,13 +33,16 @@ type
   TBaseProtocolClient = class
   private
     FActive: boolean;
+    FListening: boolean;
     FState: TConnectionState;
     FPendingRequests: TDictionary<integer, TProc<TResponse>>;
     FEventSubscribers: TList<TEventNotification>;
     FReverseRequestHandlers: TList<TReverseRequestNotification>;
+    FTaskEnabled: boolean;
     FTask: ITask;
     FBuffer: string;
     FContentLenght: integer;
+    FListeningInterval: integer;
     procedure DoHandleResponse(const AResponse: TResponse);
     procedure DoHandleEvent(const AEvent: TEvent);
     procedure DoHandleRequest(const ARequest: TRequest);
@@ -57,6 +60,8 @@ type
     function RequestData(): TBytes; virtual; abstract;
     procedure SendData(const ARaw: TBytes); virtual; abstract;
     procedure HandleData(const AData: TBytes; const ABody: TProc<string>);
+    //Async message reader
+    procedure ListenToMessages();
   public
     constructor Create();
     destructor Destroy(); override;
@@ -87,8 +92,22 @@ type
     procedure SendResponseError<T: TResponse>(const ARequest: TRequest;
       const AResponse: TResponse);
 
+    /// <summary>
+    ///   Enable/disable connection with adapter
+    /// </summary>
     property Active: boolean read FActive write SetActive;
+    /// <summary>
+    ///   Adapter connection state
+    /// </summary>
     property State: TConnectionState read FState;
+    /// <summary>
+    ///   Wait the specified milliseconds to listen to the next message
+    /// </summary>
+    property ListeningInterval: integer read FListeningInterval write FListeningInterval;
+    /// <summary>
+    ///   Connection is held without receiving messages
+    /// </summary>
+    property Listening: boolean read FListening write FListening;
   end;
 
 implementation
@@ -119,13 +138,16 @@ begin
   FEventSubscribers := TList<TEventNotification>.Create();
   FReverseRequestHandlers := TList<TReverseRequestNotification>.Create();
   FContentLenght := -1;
+  FListeningInterval := 100;
+  FTaskEnabled := true;
+  FTask := TTask.Run(ListenToMessages);
 end;
 
 destructor TBaseProtocolClient.Destroy;
 begin
-  FActive := false;
-  if Assigned(FTask) then
-    FTask.Wait();
+  FTaskEnabled := false;
+  FTask.Wait();
+  Active := false;
   FReverseRequestHandlers.Free();
   FEventSubscribers.Free();
   FPendingRequests.Free();
@@ -202,6 +224,28 @@ begin
     and (AMessage is TResponse);
 end;
 
+procedure TBaseProtocolClient.ListenToMessages;
+begin
+  try
+    while FTaskEnabled do begin
+      if FListening and (FState = TConnectionState.Connected) then
+        HandleData(RequestData(),
+          procedure(ABody: string)
+          begin
+            var LProtocolMessage := TBaseProtocolParser.DecodeMessage(ABody);
+            try
+              HandleMessage(LProtocolMessage);
+            finally
+              LProtocolMessage.Free();
+            end;
+          end);
+      Sleep(FListeningInterval);
+    end;
+  finally
+    FListening := false;
+  end;
+end;
+
 procedure TBaseProtocolClient.SendRequest<T>(const ARequest: TRequest;
   const AResolve: TResolve<T>; const AReject: TReject);
 begin
@@ -245,26 +289,12 @@ begin
     if FActive then begin
       if (FState = TConnectionState.Disconnected) then
         Connect();
-
-      FTask := TTask.Run(
-        procedure()
-        begin
-          while FActive do begin
-            HandleData(RequestData(),
-              procedure(ABody: string)
-              begin
-                var LProtocolMessage := TBaseProtocolParser.DecodeMessage(ABody);
-                try
-                  HandleMessage(LProtocolMessage);
-                finally
-                  LProtocolMessage.Free();
-                end;
-              end);
-            Sleep(100);
-          end;
-        end);
-    end else
-      Disconnect();
+      FListening := true;
+    end else begin
+      FListening := false;
+      if (FState = TConnectionState.Connected) then
+        Disconnect();
+    end;
   end;
 end;
 
