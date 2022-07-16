@@ -1061,7 +1061,7 @@ type
   TRequestsRegistration = class
   public
     class procedure RegisterAll();
-    class procedure unregisterAll();
+    class procedure UnregisterAll();
   end;
 
 implementation
@@ -1118,7 +1118,6 @@ begin
   TProtocolMessage.RegisterRequest(TRequestCommand.Restart, TRestartRequest, TRestartResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.RestartFrame, TRestartFrameRequest, TRestartFrameResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.ReverseContinue, TReverseContinueRequest, TReverseContinueResponse);
-  //TProtocolMessage.RegisterRequest(TRequestCommand.RunInTerminal, TRunInTerminalRequest, TRunInTerminalResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.Scopes, TScopesRequest, TScopesResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.SetBreakpoints, TDynamicSetBreakpointsRequest, TSetBreakpointsResponse);
   TProtocolMessage.RegisterRequest(TRequestCommand.SetDataBreakpoints, TSetDataBreakpointRequest, TSetDataBreakpointResponse);
@@ -1140,7 +1139,7 @@ begin
   TProtocolMessage.RegisterRequest(TRequestCommand.WriteMemory, TWriteMemoryRequest, TWriteMemoryResponse);
 end;
 
-class procedure TRequestsRegistration.unregisterAll;
+class procedure TRequestsRegistration.UnregisterAll;
 begin
   TProtocolMessage.UnregisterRequest(TRequestCommand.Attach);
   TProtocolMessage.UnregisterRequest(TRequestCommand.BreakpointLocations);
@@ -1165,7 +1164,6 @@ begin
   TProtocolMessage.UnregisterRequest(TRequestCommand.Restart);
   TProtocolMessage.UnregisterRequest(TRequestCommand.RestartFrame);
   TProtocolMessage.UnregisterRequest(TRequestCommand.ReverseContinue);
-  //TProtocolMessage.UnregisterRequest(TRequestCommand.RunInTerminal);
   TProtocolMessage.UnregisterRequest(TRequestCommand.Scopes);
   TProtocolMessage.UnregisterRequest(TRequestCommand.SetBreakpoints);
   TProtocolMessage.UnregisterRequest(TRequestCommand.SetDataBreakpoints);
