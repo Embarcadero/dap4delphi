@@ -22,7 +22,8 @@ type
 implementation
 
 uses
-  System.Rtti, BaseProtocol.Types;
+  System.Rtti,
+  BaseProtocol.Types;
 
 { TGenericHelper }
 

@@ -148,10 +148,10 @@ type
     [JSONName('reason'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FReason: TBreakpointEventReason;
     [JSONName('breakpoint')]
-    FBreakpoint: TBreakpoint;
+    FBreakpoint: TDynamicBreakpoint;
   public
     property Reason: TBreakpointEventReason read FReason write FReason;
-    property Breakpoint: TBreakpoint read FBreakpoint;
+    property Breakpoint: TDynamicBreakpoint read FBreakpoint;
   end;
 
   [EventType(TEventType.Breakpoint)]

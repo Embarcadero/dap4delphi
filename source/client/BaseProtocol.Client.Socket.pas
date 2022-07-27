@@ -11,9 +11,9 @@ uses
 type
   TBaseProtocolClientSocket = class(TBaseProtocolClient)
   private
+    FHost: string;
     FPort: integer;
     FSocket: TSocket;
-    FIPAddress: TIPAddress;
   protected
     procedure InternalConnect(); override;
     procedure InternalDisconnect(); override;
@@ -22,7 +22,11 @@ type
     function RequestData(): TBytes; override;
     procedure SendData(const ARaw: TBytes); override;
   public
-    constructor Create(const AAddr: string; const APort: integer);
+    constructor Create(); overload;
+    constructor Create(const AAddr: string; const APort: integer); overload;
+
+    property Host: string read FHost write FHost;
+    property Port: integer read FPort write FPort;
   end;
 
 implementation
@@ -35,16 +39,21 @@ uses
 constructor TBaseProtocolClientSocket.Create(const AAddr: string;
   const APort: integer);
 begin
-  inherited Create();
-  FSocket := TSocket.Create(TSocketType.TCP);
-  FIPAddress := TIPAddress.LookupAddress(AAddr);
+  Create();
+  FHost := AAddr;
   FPort := APort;
+end;
+
+constructor TBaseProtocolClientSocket.Create;
+begin
+  inherited;
+  FSocket := TSocket.Create(TSocketType.TCP);
 end;
 
 procedure TBaseProtocolClientSocket.InternalConnect;
 begin
   inherited;
-  FSocket.Connect(TNetEndpoint.Create(FIPAddress, FPort));
+  FSocket.Connect(TNetEndpoint.Create(TIPAddress.LookupAddress(FHost), FPort));
 end;
 
 procedure TBaseProtocolClientSocket.InternalDisconnect;

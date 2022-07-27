@@ -16,7 +16,7 @@ type
   {$SCOPEDENUMS ON}
   TConnectionState = (Disconnected, Connecting, Connected);
   {$SCOPEDENUMS OFF}
-  TResolve<T> = reference to procedure(const AArg: T);
+  TResolve<T: TResponse> = reference to procedure(const AArg: T);
   TReject = reference to procedure(const AArg: TResponseMessage);
 
   TEventNotification<T: TEvent> = reference to procedure(const AEvent: T);
@@ -36,7 +36,7 @@ type
     FListening: boolean;
     FState: TConnectionState;
     FPendingRequests: TDictionary<integer, TProc<TResponse>>;
-    FEventSubscribers: TList<TEventNotification>;
+    FEventSubscribers: TThreadList<TEventNotification>;
     FReverseRequestHandlers: TList<TReverseRequestNotification>;
     FTaskEnabled: boolean;
     FTask: ITask;
@@ -135,7 +135,7 @@ constructor TBaseProtocolClient.Create;
 begin
   FState := TConnectionState.Disconnected;
   FPendingRequests := TDictionary<integer, TProc<TResponse>>.Create();
-  FEventSubscribers := TList<TEventNotification>.Create();
+  FEventSubscribers := TThreadList<TEventNotification>.Create();
   FReverseRequestHandlers := TList<TReverseRequestNotification>.Create();
   FContentLenght := -1;
   FListeningInterval := 100;
@@ -190,8 +190,16 @@ end;
 
 procedure TBaseProtocolClient.DoHandleEvent(
   const AEvent: TEvent);
+var
+  LSubscribers: TArray<TEventNotification>;
 begin
-  for var LSubscriber in FEventSubscribers do begin
+  var LList := FEventSubscribers.LockList();
+  try
+    LSubscribers := LList.ToArray();
+  finally
+    FEventSubscribers.UnlockList();
+  end;
+  for var LSubscriber in LSubscribers do begin
     LSubscriber(AEvent);
   end;
 end;

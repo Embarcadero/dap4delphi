@@ -550,11 +550,11 @@ type
   TStackTraceResponseBody = class(TBaseType)
   private
     [JSONName('stackFrames'), Managed()]
-    FStackFrames: TStackFrames;
+    FStackFrames: TDynamicStackFrames;
     [JSONName('totalFrames')]
     FTotalFrames: integer;
   public
-    property StackFrames: TStackFrames read FStackFrames write FStackFrames;
+    property StackFrames: TDynamicStackFrames read FStackFrames write FStackFrames;
     property TotalFrames: integer read FTotalFrames write FTotalFrames;
   end;
 

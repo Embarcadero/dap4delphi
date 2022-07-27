@@ -861,7 +861,10 @@ type
   end;
 
   TDynamicStackFrame = TStackFrame<TIntegerOrString, TDynamicData>;
+
   TStackFrames = TObjectList<TStackFrame>;
+
+  TDynamicStackFrames = TObjectList<TDynamicStackFrame>;
 
   TScope = class(TBaseType)
   private
