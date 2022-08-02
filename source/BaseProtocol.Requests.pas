@@ -535,7 +535,7 @@ type
     FStartFrame: integer;
     [JSONName('levels')]
     FLevels: integer;
-    [JSONName('stackFrameFormat')]
+    [JSONName('format'), Managed()]
     FFormat: TStackFrameFormat;
   public
     property ThreadId: integer read FThreadId write FThreadId;

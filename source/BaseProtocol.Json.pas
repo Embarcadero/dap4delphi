@@ -111,6 +111,7 @@ begin
   DoRegisterObjectListConverter<TExceptionDetail>(AMarshal);
   DoRegisterObjectListConverter<TDisassembleInstruction>(AMarshal);
   DoRegisterObjectListConverter<TExceptionBreakpointsFilter>(AMarshal);
+  DoRegisterObjectListConverter<TDynamicScope>(AMarshal);
   DoRegisterObjectListConverter<TChecksum>(AMarshal);
 
   AMarshal.RegisterConverter(TEmptyBody,
@@ -193,6 +194,7 @@ begin
   DoRegisterObjectListReverter<TExceptionDetail>(AUnmarshal);
   DoRegisterObjectListReverter<TDisassembleInstruction>(AUnmarshal);
   DoRegisterObjectListReverter<TExceptionBreakpointsFilter>(AUnmarshal);
+  DoRegisterObjectListReverter<TDynamicScope>(AUnmarshal);
   DoRegisterObjectListReverter<TChecksum>(AUnmarshal);
 
   AUnmarshal.RegisterReverter(TEmptyBody,
