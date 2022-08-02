@@ -129,7 +129,7 @@ type
     None,
     Launch,
     Attach,
-    AttatchForSuspendedLaunch);
+    AttachForSuspendedLaunch);
 
   TRunInTerminalRequestArgumentsKind = (
     None,
