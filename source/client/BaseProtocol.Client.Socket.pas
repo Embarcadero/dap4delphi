@@ -32,7 +32,8 @@ type
 implementation
 
 uses
-  System.Classes;
+  System.Classes,
+  System.SyncObjs;
 
 { TBaseProtocolClientSocket }
 
@@ -64,12 +65,23 @@ end;
 
 function TBaseProtocolClientSocket.RequestData: TBytes;
 begin
-  Result := FSocket.Receive();
+  TMonitor.Enter(FSocket);
+  try
+    Result := FSocket.Receive();
+    TMonitor.Pulse(FSocket);
+  finally
+    TMonitor.Exit(FSocket);
+  end;
 end;
 
 procedure TBaseProtocolClientSocket.SendData(const ARaw: TBytes);
 begin
-  FSocket.Send(ARaw);
+  TMonitor.Enter(FSocket);
+  try
+    FSocket.Send(ARaw);
+  finally
+    TMonitor.Exit(FSocket);
+  end;
 end;
 
 end.
