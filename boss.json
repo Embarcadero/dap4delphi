@@ -4,6 +4,6 @@
 	"version": "1.0.0",
 	"homepage": "https://github.com/Embarcadero/dap4delphi",
 	"mainsrc": "source",
-	"projects": [],
+	"projects": ["./packages/dap4delphi.dproj"],
 	"dependencies": {}
 }
