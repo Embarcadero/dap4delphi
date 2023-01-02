@@ -760,14 +760,14 @@ type
     [JSONName('expression')]
     FExpression: string;
     [JSONName('frameId')]
-    FFrameId: string;
+    FFrameId: integer;
     [JSONName('context'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FContext: TEvaluteContext;
     [JSONName('format'), Managed()]
     FFormat: TValueFormat;
   public
     property Expression: string read FExpression write FExpression;
-    property FrameId: string read FFrameId write FFrameId;
+    property FrameId: Integer read FFrameId write FFrameId;
     property Context: TEvaluteContext read FContext write FContext;
     property Format: TValueFormat read FFormat write FFormat;
   end;
