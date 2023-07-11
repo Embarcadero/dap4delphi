@@ -350,8 +350,24 @@ begin
   LRttiField.SetValue(Data, LEnumValue);
 end;
 
+procedure DoInitialize();
+begin
+  var LMarshaler := TJSONConverters.GetJSONMarshaler();
+  try
+    TBaseProtocolJsonAdapter.RegisterConverters(LMarshaler);
+  finally
+    LMarshaler.Free();
+  end;
+
+  var LUnmarshaler := TJSONConverters.GetJSONUnMarshaler();
+  try
+    TBaseProtocolJsonAdapter.RegisterReverters(LUnmarshaler);
+  finally
+    LUnmarshaler.Free();
+  end;
+end;
+
 initialization
-  TBaseProtocolJsonAdapter.RegisterConverters(TJSONConverters.GetJSONMarshaler());
-  TBaseProtocolJsonAdapter.RegisterReverters(TJSONConverters.GetJSONUnMarshaler());
+  DoInitialize();
 
 end.

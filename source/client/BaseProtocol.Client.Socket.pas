@@ -24,6 +24,7 @@ type
   public
     constructor Create(); overload;
     constructor Create(const AAddr: string; const APort: integer); overload;
+    destructor Destroy(); override;
 
     property Host: string read FHost write FHost;
     property Port: integer read FPort write FPort;
@@ -43,6 +44,12 @@ begin
   Create();
   FHost := AAddr;
   FPort := APort;
+end;
+
+destructor TBaseProtocolClientSocket.Destroy;
+begin
+  FSocket.Free();
+  inherited;
 end;
 
 constructor TBaseProtocolClientSocket.Create;
