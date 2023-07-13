@@ -132,39 +132,23 @@ begin
       raise ENotImplemented.Create('Not implemented.');
     end);
 
-  AMarshal.RegisterConverter(TDynamicStackFrame,
-    function(Data: TObject): TObject
-    begin
-      if TDynamicStackFrame(Data).ModuleId.IsType<Integer> then
-        Result := TStackFrame<Integer, TDynamicData>.Create()
-      else
-        Result := TStackFrame<String, TDynamicData>.Create();
-      TPersistent(Result).Assign(TPersistent(Data));
-    end);
-
-  AMarshal.RegisterConverter(TDynamicSource,
-    function(Data: TObject): TObject
+  //Must change this to a generic converter.
+  //We are assuming that the adapter data will always be a string
+  AMarshal.RegisterConverter(TDynamicSource, 'FAdapterData',
+    function(Data: TObject; Field: string): string
     var
       LRttiCtx: TRttiContext;
     begin
+      Result := String.Empty;
+
       var LRttiType := LRttiCtx.GetType(Data.ClassInfo);
       var LRttiProp := LRttiType.GetProperty('AdapterData');
 
-      var LAdapterDataType := TTypeKind.tkString;
       if LRttiProp.PropertyType.Handle = PTypeInfo(TypeInfo(TValue)) then begin
         var LData := LRttiProp.GetValue(Data).AsType<TValue>;
         if (LData.Kind in [tkUnknown, tkUString]) then
-          LAdapterDataType := TTypeKind.tkUString;
+          Result := LData.AsString;
       end;
-
-      case LAdapterDataType of
-        //We can only marshal to string at the moment
-        tkUString: Result := TSource<String>.Create();
-        else
-          raise ENotImplemented.Create('Not implemented.');
-      end;
-
-      TPersistent(Result).Assign(TPersistent(Data));
     end);
 end;
 

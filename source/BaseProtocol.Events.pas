@@ -113,7 +113,6 @@ type
     FGroup: TOutputEventGroup;
     [JSONName('variablesReference')]
     FVariablesReference: integer;
-    [Managed()]
     [JSONName('line')]
     FLine: integer;
     [JSONName('column')]
@@ -147,6 +146,7 @@ type
   private
     [JSONName('reason'), JSONReflect(ctString, rtString, TEnumInterceptor)]
     FReason: TBreakpointEventReason;
+    [Managed()]
     [JSONName('breakpoint')]
     FBreakpoint: TDynamicBreakpoint;
   public

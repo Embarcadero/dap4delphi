@@ -382,7 +382,8 @@ type
     [Managed()]
     [JSONName('sources')]
     FSources: TSources;
-    [JSONName('checksums'), Managed()]
+    [Managed()]
+    [JSONName('checksums')]
     FChecksums: TCheckSums;
   public
     procedure Assign(Source: TPersistent); override;
@@ -401,7 +402,6 @@ type
     [Managed()]
     [JSONName('adapterData')]
     FAdapterData: TAdapterData;
-    [Managed()]
   public
     procedure Assign(Source: TPersistent); override;
 
