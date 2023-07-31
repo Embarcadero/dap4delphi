@@ -38,6 +38,12 @@ uses
 
 { TBaseProtocolClientSocket }
 
+constructor TBaseProtocolClientSocket.Create;
+begin
+  inherited;
+  FSocket := TSocket.Create(TSocketType.TCP);
+end;
+
 constructor TBaseProtocolClientSocket.Create(const AAddr: string;
   const APort: integer);
 begin
@@ -48,14 +54,8 @@ end;
 
 destructor TBaseProtocolClientSocket.Destroy;
 begin
+  inherited;
   FSocket.Free();
-  inherited;
-end;
-
-constructor TBaseProtocolClientSocket.Create;
-begin
-  inherited;
-  FSocket := TSocket.Create(TSocketType.TCP);
 end;
 
 procedure TBaseProtocolClientSocket.InternalConnect;
